@@ -1,0 +1,20 @@
+version: "3"
+services:
+  kaggle:
+    build: .
+    volumes:
+      - $PWD:/kaggle/working
+      - ./.jupyter:/root/.jupyter
+    working_dir: /kaggle/working
+    environment:
+      - JUPYTERLAB_SETTINGS_DIR=/kaggle/working/.jupyter-settings # jupyterの設定(保存用)
+    ports:
+      - 8889:8889
+    command: jupyter lab --allow-root --ip=0.0.0.0 --port=8889 --no-browser --NotebookApp.token=''
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
