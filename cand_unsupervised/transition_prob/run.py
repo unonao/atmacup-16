@@ -22,7 +22,7 @@ candidates
 ╞══════════════════════════════════╪═══════════════════════╡
 │ 000007603d533d30453cc45d0f3d119f ┆ [11882, 2808, … 5289] │
 │ 0000ca043ed437a1472c9d1d154eb49b ┆ [8253, 8747, … 4488]  │
-│ 0000d4835cf113316fe447e2f80ba1c8 ┆ [null]                │
+│ 0000d4835cf113316fe447e2f80ba1c8 ┆ []                    │
 │ 0000fcda1ae1b2f431e55a7075d1f500 ┆ [626, 755, … 7872]    │
 │ 000104bdffaaad1a1e0a9ebacf585f33 ┆ [96, 3894, … 12338]   │
 └──────────────────────────────────┴───────────────────────┘
@@ -131,7 +131,7 @@ def my_app(cfg: DictConfig) -> None:
         # 遷移確率を結合し、確率の降順に候補として生成する
         train_candidate_df = (
             train_last_log_df.join(
-                transition_df, left_on="yad_no", right_on="from_yad_no", how="left"
+                transition_df, left_on="yad_no", right_on="from_yad_no", how="inner"
             )
             .sort(by=["session_id", "transition_prob"], descending=True)
             .group_by("session_id")
@@ -139,6 +139,12 @@ def my_app(cfg: DictConfig) -> None:
         )
         train_candidate_df = train_session_df.join(
             train_candidate_df, on="session_id", how="left"
+        ).with_columns(
+            # candidates が null の場合は空のリストを入れておく
+            pl.when(pl.col("candidates").is_null())
+            .then(pl.Series("empty", [[]]))
+            .otherwise(pl.col("candidates"))
+            .alias("candidates")
         )
 
         # session_id ごとに最後の yad_no を取得する
@@ -150,7 +156,7 @@ def my_app(cfg: DictConfig) -> None:
         # 遷移確率を結合し、確率の降順に候補として生成する
         test_candidate_df = (
             test_last_log_df.join(
-                transition_df, left_on="yad_no", right_on="from_yad_no", how="left"
+                transition_df, left_on="yad_no", right_on="from_yad_no", how="inner"
             )
             .sort(by=["session_id", "transition_prob"], descending=True)
             .group_by("session_id")
@@ -158,6 +164,11 @@ def my_app(cfg: DictConfig) -> None:
         )
         test_candidate_df = test_session_df.join(
             test_candidate_df, on="session_id", how="left"
+        ).with_columns(
+            pl.when(pl.col("candidates").is_null())
+            .then(pl.Series("empty", [[]]))
+            .otherwise(pl.col("candidates"))
+            .alias("candidates")
         )
 
         print("train_candidate_df")
