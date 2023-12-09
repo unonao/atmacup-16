@@ -1,2 +1,5 @@
-input_dir: /kaggle/working/input
+data_dir: /kaggle/working/input/atmaCup16_Dataset
 output_dir: /kaggle/working/output
+exp_dir: /kaggle/working/output/exp
+cand_unsupervised_dir: /kaggle/working/output/cand_unsupervised
+cand_supervised_dir: /kaggle/working/output/cand_supervised

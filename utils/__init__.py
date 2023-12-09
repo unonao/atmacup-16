@@ -1,5 +1,3 @@
-from .data import *
-
 import time
 from contextlib import contextmanager
 
