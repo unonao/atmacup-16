@@ -42,3 +42,16 @@ def load_session_data(data_dir: Path, mode: str) -> pl.DataFrame:
         df = pl.read_csv(session_file_path).drop("yad_no")
     assert df is not None
     return df
+
+
+def load_yad_data(data_dir: Path) -> pl.DataFrame:
+    """
+    yadデータを読み込む
+    """
+    # ファイルパスを取得
+    yad_file_path = data_dir / "yado.csv"
+
+    # データを読み込む
+    df = pl.read_csv(yad_file_path)
+
+    return df
