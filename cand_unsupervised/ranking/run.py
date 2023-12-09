@@ -52,7 +52,7 @@ def my_app(cfg: DictConfig) -> None:
         project="atmaCup16-candidate",
         name=exp_name,
         config=OmegaConf.to_container(cfg.exp, resolve=True),
-        mode="disabled",  # if cfg.debug else "online",
+        mode="disabled" if cfg.debug else "online",
     )
 
     print(f"exp_name: {exp_name}")
