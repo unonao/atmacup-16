@@ -1,0 +1,19 @@
+fold_path: '/kaggle/working/output/datasets/make_cv/base/train_fold.parquet'
+
+
+candidate_info_list:
+  - name: 'transition_prob/base'
+    max_num_candidates: 100 # 平均15,16個程度
+    dir: '/kaggle/working/output/cand_unsupervised/transition_prob/base'
+    features: 
+      - name: yad2yad_feature
+  - name: 'ranking_location/sml_cd' 
+    max_num_candidates: 50
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/sml_cd'
+    features: 
+      - name: yad_feature
+  - name: 'ranking_location/lrg_cd' 
+    max_num_candidates: 50
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/lrg_cd'
+    features: 
+      - name: yad_feature
