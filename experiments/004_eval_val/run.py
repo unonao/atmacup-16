@@ -236,7 +236,7 @@ def main(cfg: DictConfig) -> None:
             .with_columns(pl.Series(name="pred", values=test_preds))
             .sort(by=["session_id", "pred"], descending=True)
         )
-        test_submission_df, _ = make_submission(test_pred_df, "test")
+        test_submission_df = make_submission(test_pred_df, "test")
         test_submission_df.write_csv(output_path / "submission.csv")
 
 
