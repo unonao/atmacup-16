@@ -193,6 +193,7 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
         last_log_prob_df,
         left_on=["session_id", "candidates"],
         right_on=["session_id", "to_yad_no"],
+        how="left",
     ).drop("from_yad_no")
 
     # 増えたカラムを出力
