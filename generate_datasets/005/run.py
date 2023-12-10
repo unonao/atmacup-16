@@ -18,7 +18,7 @@ from utils.data import convert_to_32bit
 from utils.load import load_label_data, load_log_data, load_yad_data
 from utils.logger import get_logger
 
-numerical_cols = [ # あとで書き換えるので注意
+numerical_cols = [  # あとで書き換えるので注意
     "total_room_cnt",
     "wireless_lan_flg",
     "onsen_flg",
@@ -208,6 +208,25 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
         how="left",
     ).drop("from_yad_no")
 
+    # last 以外からのtransition probも追加
+    yad2yad_prob = pl.read_parquet(cfg.exp.transition_prob_path)
+    prob_col = "transition_prob_transition_prob/base"
+    log_df = load_log_data(Path(cfg.dir.data_dir), mode)
+    log_df = (
+        log_df.sort(by="session_id").with_columns(pl.col("yad_no").alias("from_yad_no"))
+    ).select(["session_id", "from_yad_no"])
+    log_df = (
+        log_df.join(yad2yad_prob, on="from_yad_no")
+        .group_by(["session_id", "to_yad_no"])
+        .agg(pl.sum(prob_col).alias(prob_col + "_from_all"))
+    )
+    candidate_df = candidate_df.join(
+        log_df,
+        left_on=["session_id", "candidates"],
+        right_on=["session_id", "to_yad_no"],
+        how="left",
+    ).drop("from_yad_no")
+
     # 増えたカラムを出力
     new_cols = [col for col in candidate_df.columns if col not in original_cols]
     print(f"new_cols: {new_cols}")
@@ -218,7 +237,7 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
 def make_datasets(cfg, mode: str):
     logger.info(f"make_datasets: {mode}")
 
-    candidate_df = load_and_union_candidates(cfg, mode)    
+    candidate_df = load_and_union_candidates(cfg, mode)
     logger.info(f"load_and_union_candidates: {candidate_df.shape}")
 
     candidate_df = concat_label_fold(cfg, mode, candidate_df)
@@ -250,10 +269,12 @@ def make_datasets(cfg, mode: str):
         logger.info(candidate_df.head(10))
         logger.info(candidate_df.shape)
         logger.info(candidate_df.columns)
-        avg_candidates = len(candidate_df) / candidate_df['session_id'].unique().len()
-        recall_rate = candidate_df.filter(pl.col('original')==True)['label'].sum() / candidate_df['session_id'].unique().len()
+        avg_candidates = len(candidate_df) / candidate_df["session_id"].unique().len()
+        recall_rate = (
+            candidate_df.filter(pl.col("original") == True)["label"].sum()
+            / candidate_df["session_id"].unique().len()
+        )
         logger.info(f"avg_candidates: {avg_candidates}, recall_rate: {recall_rate}")
-
 
     return candidate_df
 
