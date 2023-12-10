@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 import sys
@@ -17,8 +18,11 @@ from tqdm.auto import tqdm
 import utils
 import wandb
 from utils.load import load_label_data, load_session_data
+from utils.logger import get_logger
 from utils.metrics import calculate_metrics
 from wandb.lightgbm import log_summary, wandb_callback
+
+logger = None
 
 
 def train_one_fold(
@@ -54,7 +58,7 @@ def train_one_fold(
         callbacks=[wandb_callback()],
     )
     log_summary(bst, save_model_checkpoint=True)
-    print(
+    logger.info(
         f"best_itelation: {bst.best_iteration}, train: {bst.best_score['train']}, valid: {bst.best_score['valid']}"
     )
     return bst
@@ -87,12 +91,15 @@ def main(cfg: DictConfig) -> None:
     runtime_choices = HydraConfig.get().runtime.choices
     exp_name = f"{Path(sys.argv[0]).parent.name}/{runtime_choices.exp}"
 
-    print(f"exp_name: {exp_name}")
     output_path = Path(cfg.dir.exp_dir) / exp_name
-    print(f"ouput_path: {output_path}")
     os.makedirs(output_path, exist_ok=True)
 
-    print(OmegaConf.to_yaml(cfg))
+    global logger
+    logger = get_logger(__name__, file_path=output_path / "run.log")
+
+    logger.info(f"exp_name: {exp_name}")
+    logger.info(f"ouput_path: {output_path}")
+    logger.info(OmegaConf.to_yaml(cfg))
 
     wandb.init(
         project="atmaCup16-exp",
@@ -116,12 +123,24 @@ def main(cfg: DictConfig) -> None:
     test_preds = np.zeros(len(test_df))
     # train
     for fold in range(num_folds):
-        print(f"fold: {fold}")
+        logger.info(f"fold: {fold}")
         train_fold_df = train_df.filter(pl.col("fold") != fold)
         valid_fold_df = train_df.filter(pl.col("fold") == fold)
 
-        print(f"train_fold_df: {train_fold_df.shape}")
-        print(f"valid_fold_df: {valid_fold_df.shape}")
+        # train の負例をダウンサンプリング
+        if cfg.exp.lgbm.downsampling_rate:
+            train_positive_fold_df = train_fold_df.filter(
+                pl.col(cfg.exp.lgbm.label_col) == 1
+            )
+            logger.info(f"train_positive_fold_df: {train_positive_fold_df.shape}")
+            train_negative_fold_df = train_fold_df.filter(
+                pl.col(cfg.exp.lgbm.label_col) == 0
+            ).sample(fraction=cfg.exp.lgbm.downsampling_rate, seed=cfg.seed)
+            logger.info(f"train_negative_fold_df: {train_negative_fold_df.shape}")
+            train_fold_df = pl.concat([train_positive_fold_df, train_negative_fold_df])
+
+        logger.info(f"train_fold_df: {train_fold_df.shape}")
+        logger.info(f"valid_fold_df: {valid_fold_df.shape}")
 
         bst = train_one_fold(cfg, train_fold_df, valid_fold_df)
         save_model(cfg, bst, output_path, fold)
@@ -131,8 +150,6 @@ def main(cfg: DictConfig) -> None:
         y_pred = predict_one_fold(cfg, bst, test_df)
         oof[index_array[train_df["fold"].to_numpy() == fold]] = y_valid_pred
         test_preds += y_pred / num_folds
-
-        print()
 
         #
 
@@ -176,7 +193,7 @@ def main(cfg: DictConfig) -> None:
         metrics = calculate_metrics(
             candidaates_df, candidates_col="candidates", label_col="yad_no", k=[10]
         )
-        print(f"metrics: {metrics}")
+        logger.info(f"metrics: {metrics}")
 
     with utils.trace("make test submission"):
         test_pred_df = (

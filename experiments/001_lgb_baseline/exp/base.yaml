@@ -1,6 +1,5 @@
 datasets_dir: /kaggle/working/output/datasets/001_baseline/base
 
-
 lgbm:
   cat_cols: []
   unuse_cols: 
@@ -12,7 +11,7 @@ lgbm:
     - fold
   label_col: label
   verbose_eval: 100
-  ndcg_eval_at: [50, 100]
+  downsampling_rate: 0.1
   params:
     num_iterations: 4000
     early_stopping_round: 200
