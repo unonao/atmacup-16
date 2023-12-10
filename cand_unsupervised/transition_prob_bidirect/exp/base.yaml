@@ -1,0 +1,5 @@
+range_transition: 1
+
+
+num_candidate: 100
+k: [1, 5, 10, 50, 100]
