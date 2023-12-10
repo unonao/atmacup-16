@@ -1,0 +1,15 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+datasets_dir: /kaggle/working/output/datasets/001_baseline/base
+
+lgbm:
+  cat_cols: []
+  unuse_cols: 
+    - yad_no
+    - session_id
+    - candidates
+    - original
+    - label
+    - fold
+  label_col: label

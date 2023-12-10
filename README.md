@@ -28,10 +28,12 @@
 ## Docker による環境構築
 
 ```sh
-docker compose biuld
+docker compose build
+docker compose -f compose.cpu.yaml build
 
 # bash に入る場合
 docker compose run --rm kaggle bash 
+docker compose -f compose.cpu.yaml run --rm kaggle-cpu bash
 
 # jupyter lab を起動する場合
 docker compose up 
@@ -49,3 +51,28 @@ python experiments/check/run.py exp=base
 - 各スクリプトによって変わる設定は、実行スクリプトのあるフォルダ(`{major_exp_name}`)の中に `exp/{minor_exp_name}.yaml` として配置することで管理。
     - 実行時に `exp={minor_exp_name}` で上書きする
     - `{major_exp_name}` と `{minor_exp_name}` の組み合わせで実験が再現できるようにする
+
+
+### 候補生成
+```sh
+ python cand_unsupervised/ranking/run.py
+ python cand_unsupervised/ranking_location/run.py exp=sml_cd
+ python cand_unsupervised/ranking_location/run.py exp=lrg_cd
+ python cand_unsupervised/ranking_location/run.py exp=ken_cd
+ python cand_unsupervised/ranking_location/run.py exp=wid_cd
+ python cand_unsupervised/transition_prob/run.py
+
+```
+
+### 学習データ生成
+```sh
+python generate_datasets/make_cv/run.py 
+python generate_datasets/002_add_features/run.py 
+```
+
+### 学習&推論
+```sh
+python experiments/004_eval_val/run.py exp=001
+python experiments/004_eval_val/run.py exp=002
+python experiments/004_eval_val/run.py exp=003
+```

@@ -11,6 +11,7 @@ lgbm:
   label_col: label
   verbose_eval: 100
   downsampling_rate: 0.02
+  ndcg_eval_at: [5, 10]
   params:
     num_iterations: 4000
     early_stopping_round: 200
@@ -23,9 +24,10 @@ lgbm:
     min_child_samples: 10
     task: train
     boosting_type: gbdt
-    objective: binary
+    objective: lambdarank
     first_metric_only: true
-    metric: [auc, binary_logloss]
+    metric: [map, ndcg, auc]
+    ndcg_eval_at: []
     max_depth: 8
     learning_rate: 0.5
     num_thread: -1
