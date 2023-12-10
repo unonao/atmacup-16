@@ -1,0 +1,9 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+datasets_dir: /kaggle/working/output/datasets/004/base
+
+lgbm:
+  downsampling_rate: 0.5
+  params:
+    learning_rate: 0.1
