@@ -1,0 +1,10 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+
+lgbm:
+  downsampling_rate: 0.5
+  ndcg_eval_at: [5, 10]
+  params:
+    metric: [map, ndcg, auc]
+    objective: lambdarank

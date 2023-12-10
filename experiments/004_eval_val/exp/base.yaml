@@ -11,7 +11,9 @@ lgbm:
   label_col: label
   verbose_eval: 100
   downsampling_rate: 0.02
+  ndcg_eval_at: [5, 10]
   params:
+    ndcg_eval_at: []
     num_iterations: 4000
     early_stopping_round: 200
     lambda_l1: 0.1

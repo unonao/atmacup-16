@@ -13,6 +13,8 @@ lgbm:
   downsampling_rate: 0.02
   ndcg_eval_at: [5, 10]
   params:
+    metric: [map, ndcg, auc]
+    ndcg_eval_at: []
     num_iterations: 4000
     early_stopping_round: 200
     lambda_l1: 0.1
@@ -26,8 +28,6 @@ lgbm:
     boosting_type: gbdt
     objective: lambdarank
     first_metric_only: true
-    metric: [map, ndcg, auc]
-    ndcg_eval_at: []
     max_depth: 8
     learning_rate: 0.5
     num_thread: -1
