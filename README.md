@@ -62,6 +62,7 @@ python experiments/check/run.py exp=base
  python cand_unsupervised/ranking_location/run.py exp=wid_cd
  python cand_unsupervised/transition_prob/run.py
 
+ python cand_unsupervised/ranking_location_all/run.py exp=sml_cd
 ```
 
 ### 学習データ生成
@@ -72,7 +73,5 @@ python generate_datasets/002_add_features/run.py
 
 ### 学習&推論
 ```sh
-python experiments/004_eval_val/run.py exp=001
-python experiments/004_eval_val/run.py exp=002
-python experiments/004_eval_val/run.py exp=003
+python experiments/005_one_epoch/run.py exp=001 exp.one_epoch=True
 ```

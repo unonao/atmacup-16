@@ -4,6 +4,8 @@
 /input
 /output
 /wandb
+/.wandb
+/db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

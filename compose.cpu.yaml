@@ -19,7 +19,7 @@ services:
     tty: true
     networks:
       - mysql-network
-  db:
+  db-cpu:
     image: mysql:5.7
     container_name: 'db'
     expose:

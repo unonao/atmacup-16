@@ -1,4 +1,5 @@
 """
+logの出現頻度のランキングを作成する。session内に出現したlocationすべてについてそれぞれ上位30個を候補とする。
 
 yad_feature(地域ごとのカウントとランク)
 ┌────────┬────────────────────────────────┬──────────────────────────────┐
@@ -92,7 +93,6 @@ def my_app(cfg: DictConfig) -> None:
     """
     候補の作成
     """
-    # session_id ごとにランキングの上位10個を予測値とする submission を作成
     with utils.timer("load session data"):
         train_session_df = load_session_data(Path(cfg.dir.data_dir), "train")
         test_session_df = load_session_data(Path(cfg.dir.data_dir), "test")
@@ -108,6 +108,7 @@ def my_app(cfg: DictConfig) -> None:
                         pl.col("yad_no").alias("candidates"),
                     ]
                 )
+                .with_columns(pl.col("candidates").list.head(cfg.exp.num_candidate))
             )
             .select([cfg.exp.location_col, "candidates"])
             .sort(by=cfg.exp.location_col)
@@ -117,25 +118,22 @@ def my_app(cfg: DictConfig) -> None:
 
         # それぞれの session_id の中で最頻値の location_col を取得
         train_session_mode_df = (
-            train_log_df.join(yad_df, on="yad_no")
-            .group_by("session_id")
-            .agg(
-                [
-                    pl.col(cfg.exp.location_col)
-                    .mode()
-                    .first()
-                    .alias(cfg.exp.location_col)
-                ]
+            train_log_df.join(
+                yad_df.select(["yad_no", cfg.exp.location_col]), on="yad_no"
             )
-        ).sort(by="session_id")
+            .join(location_candidates_df, on=cfg.exp.location_col)
+            .group_by("session_id")
+            .agg(pl.col("candidates").flatten())
+            .sort(by="session_id")
+        )
         print("train_session_mode_df")
         print(train_session_mode_df.head(5))
 
         # candidate
         train_candidate_df = (
-            train_session_df.join(train_session_mode_df, on="session_id")
-            .join(location_candidates_df, on=cfg.exp.location_col)
-            .select(["session_id", "candidates"])
+            train_session_df.join(train_session_mode_df, on="session_id").select(
+                ["session_id", "candidates"]
+            )
         ).sort(by="session_id")
         print("train_candidate_df")
         print(train_candidate_df.head(5))
