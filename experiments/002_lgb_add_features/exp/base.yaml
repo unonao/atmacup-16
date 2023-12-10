@@ -1,11 +1,10 @@
-datasets_dir: /kaggle/working/output/datasets/001_baseline/base
+datasets_dir: /kaggle/working/output/datasets/002_lgb_add_features/base
 
 lgbm:
-  cat_cols: []
+  cat_cols: ['yad_type', 'wid_cd', 'ken_cd', 'lrg_cd', 'sml_cd', 'candidates']
   unuse_cols: 
     - yad_no
     - session_id
-    - candidates
     - original
     - label
     - fold
