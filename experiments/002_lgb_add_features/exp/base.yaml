@@ -1,4 +1,4 @@
-datasets_dir: /kaggle/working/output/datasets/002_lgb_add_features/base
+datasets_dir: /kaggle/working/output/datasets/002_add_features/base
 
 lgbm:
   cat_cols: ['yad_type', 'wid_cd', 'ken_cd', 'lrg_cd', 'sml_cd', 'candidates']
