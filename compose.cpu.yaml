@@ -10,6 +10,7 @@ services:
       - ./.jupyter:/root/.jupyter # jupyterの設定
     environment:
       - JUPYTERLAB_SETTINGS_DIR=/kaggle/working/.jupyter-settings # jupyterの設定(保存用)
+      - WANDB_CACHE_DIR=/kaggle/working/.wandb # wandbの設定(保存用)
     working_dir: /kaggle/working
     ports:
       - 8889:8889
