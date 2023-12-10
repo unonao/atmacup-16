@@ -1,0 +1,32 @@
+fold_path: '/kaggle/working/output/datasets/make_cv/base/train_fold.parquet'
+
+
+candidate_info_list:
+  - name: 'transition_prob/base'
+    max_num_candidates: 100 # 平均15,16個程度
+    dir: '/kaggle/working/output/cand_unsupervised/transition_prob/base'
+  - name: 'transition_prob_all/base' 
+    max_num_candidates: 100
+    dir: '/kaggle/working/output/cand_unsupervised/transition_prob_all/base'
+  - name: 'ranking_location/sml_cd' 
+    max_num_candidates: 20
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/sml_cd'
+  - name: 'ranking_location/lrg_cd' 
+    max_num_candidates: 20
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/lrg_cd'
+  - name: 'ranking_location/ken_cd' 
+    max_num_candidates: 5
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/ken_cd'
+  - name: 'ranking_location/wid_cd' 
+    max_num_candidates: 5
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/wid_cd'
+
+
+transition_prob_path: '/kaggle/working/output/cand_unsupervised/transition_prob/base/yad2yad_feature.parquet'
+
+yad_feature_paths:
+  - output/cand_unsupervised/ranking/base/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/ken_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/lrg_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/sml_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/wid_cd/yad_feature.parquet

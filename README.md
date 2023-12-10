@@ -37,6 +37,7 @@ docker compose -f compose.cpu.yaml run --rm kaggle-cpu bash
 
 # jupyter lab を起動する場合
 docker compose up 
+docker compose -f compose.cpu.yaml  up 
 ```
 
 ## スクリプトの実行方法
@@ -74,4 +75,6 @@ python generate_datasets/002_add_features/run.py
 ### 学習&推論
 ```sh
 python experiments/005_one_epoch/run.py exp=001 exp.one_epoch=True
+python experiments/005_one_epoch/run.py exp=v2_004
+python experiments/005_one_epoch/run.py exp=v2_005
 ```

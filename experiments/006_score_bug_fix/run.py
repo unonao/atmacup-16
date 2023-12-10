@@ -167,7 +167,9 @@ def main(cfg: DictConfig) -> None:
         logger.info(f"train_fold_df: {train_fold_df.shape}")
         logger.info(f"valid_fold_df: {valid_fold_df.shape}")
 
-        bst = train_one_fold(cfg, train_fold_df, valid_fold_df)
+        bst = train_one_fold(
+            cfg, train_fold_df, valid_fold_df.filter(pl.col("original") == 1)
+        )
         save_model(cfg, bst, output_path, fold)
 
         # valid
