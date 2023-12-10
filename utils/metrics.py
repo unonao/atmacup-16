@@ -44,11 +44,13 @@ def calculate_metrics(
         k = [k]
 
     for k_ in k:
+        print(f"k: {k_}")
         metrics = {}
         # label_df の yad_no をリストに変換
         avg_num_candidates = (
             candidate_df.to_pandas()[candidates_col].apply(lambda x: len(x[:k_])).mean()
         )
+        print(f"avg_num_candidates: {avg_num_candidates}")
 
         recall = (
             candidate_df.select(candidates_col, label_col)
@@ -56,6 +58,7 @@ def calculate_metrics(
             .to_numpy()
             .mean()
         )
+        print(f"recall: {recall}")
 
         precision = (
             candidate_df.select(candidates_col, label_col)
@@ -63,12 +66,15 @@ def calculate_metrics(
             .to_numpy()
             .mean()
         )
+        print(f"precision: {precision}")
+
         map_at_k = (
             candidate_df.select(candidates_col, label_col)
             .map_rows(lambda row: calculate_average_precision_at_k(row[0], row[1], k_))
             .to_numpy()
             .mean()
         )
+        print(f"map@k: {map_at_k}")
 
         metrics = {
             "k": k_,
@@ -78,5 +84,6 @@ def calculate_metrics(
             "map@k": map_at_k,
         }
         metrics_list.append(metrics)
+        print()
 
     return metrics_list
