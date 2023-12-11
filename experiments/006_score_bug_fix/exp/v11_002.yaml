@@ -1,0 +1,72 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+datasets_dir: /kaggle/working/output/datasets/011/base
+
+lgbm:
+  cat_cols: []
+  unuse_cols: 
+    - yad_no
+    - session_id
+    - original
+    - label
+    - fold
+    - candidates
+    - yad_type
+    - wid_cd
+    - ken_cd
+    - lrg_cd
+    - sml_cd
+    # importance 0
+    - kd_stn_5min_session_sum
+    - onsen_flg_session_sum
+    - counts_ranking_location/lrg_cd_session_sum
+    - kd_bch_5min_session_sum
+    - kd_slp_5min_session_sum
+    - counts_ranking_location/sml_cd_session_sum
+    - kd_stn_5min_session_min
+    - wireless_lan_flg_session_min
+    - rank_ranking_location/ken_cd_session_min
+    - onsen_flg_session_min
+    - rank_ranking_location/lrg_cd_session_min
+    - total_room_cnt_session_min
+    - counts_ranking/base_session_min
+    - counts_ranking_location/lrg_cd_session_min
+    - kd_bch_5min_session_min
+    - kd_slp_5min_session_min
+    - counts_ranking_location/sml_cd_session_min
+    - rank_ranking/base_session_max
+    - kd_stn_5min_session_max
+    - wireless_lan_flg_session_max
+    - counts_ranking_location/wid_cd_session_max
+    - rank_ranking_location/ken_cd_session_max
+    - rank_ranking_location/wid_cd_session_max
+    - rank_ranking_location/lrg_cd_session_max
+    - counts_ranking/base_session_max
+    - counts_ranking_location/lrg_cd_session_max
+    - kd_bch_5min_session_max
+    - kd_slp_5min_session_max
+    - counts_ranking_location/sml_cd_session_max
+    - kd_stn_5min_session_std
+    - rank_ranking_location/ken_cd_session_std
+    - onsen_flg_session_std
+    - counts_ranking/base_session_std
+    - counts_ranking_location/lrg_cd_session_std
+    - kd_bch_5min_session_std
+    - counts_ranking_location/sml_cd_session_std
+    - kd_stn_5min
+    - wireless_lan_flg
+    - counts_ranking/base
+    - counts_ranking_location/lrg_cd
+    - kd_bch_5min
+    - kd_slp_5min
+    - counts_ranking_location/sml_cd
+    - same_yad_type_rate
+
+  downsampling_rate: 1.0
+  params:
+    learning_rate: 0.1
+    num_iterations: 4000
+    early_stopping_round: 50
+
+
