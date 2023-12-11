@@ -1,0 +1,17 @@
+num_candidate: 100
+k: [1, 5, 10, 50, 100]
+
+embedding_dim: 128
+
+node2vec:
+  batch_size: 128
+  num_epochs: 50
+  lr: 0.01
+  params:
+    embedding_dim: ${embedding_dim}
+    walk_length: 20
+    context_size: 10
+    walks_per_node: 10
+    p: 1.0
+    q: 1.0  
+    num_negative_samples: 1
