@@ -17,3 +17,5 @@ lgbm:
     - ken_cd
     - lrg_cd
     - sml_cd
+  params:
+    min_child_samples: 20

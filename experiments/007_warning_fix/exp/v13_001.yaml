@@ -1,7 +1,7 @@
 defaults:
   - base@_here_ # ベースの設定ファイルを指定する
 
-datasets_dir: /kaggle/working/output/datasets/012/001
+datasets_dir: /kaggle/working/output/datasets/013/base
 
 lgbm:
   cat_cols: []

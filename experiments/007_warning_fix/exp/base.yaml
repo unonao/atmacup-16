@@ -1,4 +1,4 @@
-datasets_dir: /kaggle/working/output/datasets/003_bidirectional/base
+datasets_dir: /kaggle/working/output/datasets/012/001
 one_epoch: False
 
 lgbm:
@@ -13,9 +13,10 @@ lgbm:
   verbose_eval: 100
   num_boost_round: 4000
   early_stopping_round: 50
-  downsampling_rate: 0.5
+  downsampling_rate: 1.0
   ndcg_eval_at: [5, 10]
   params:
+    learning_rate: 0.1
     metric: [map, ndcg, auc]
     objective: lambdarank
     ndcg_eval_at: []
@@ -30,7 +31,6 @@ lgbm:
     boosting_type: gbdt
     first_metric_only: true
     max_depth: 8
-    learning_rate: 0.5
     num_thread: -1
     max_bin: 256 # 大きいほどfitする
     verbose: -1

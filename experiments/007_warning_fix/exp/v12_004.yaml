@@ -17,3 +17,5 @@ lgbm:
     - ken_cd
     - lrg_cd
     - sml_cd
+  params:
+    num_leaves: 64
