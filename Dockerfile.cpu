@@ -11,4 +11,6 @@ RUN python3 -m pip install --upgrade pip \
     jupyterlab_code_formatter 
 
 RUN pip install --no-cache-dir \
-    hydra-core segmentation-models-pytorch numexpr==2.8.4 
+    hydra-core  torch_geometric
+    
+RUN pip install torch_cluster -f https://data.pyg.org/whl/torch-2.0.0+cpu.html

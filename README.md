@@ -37,7 +37,7 @@ docker compose -f compose.cpu.yaml run --rm kaggle-cpu bash
 
 # jupyter lab を起動する場合
 docker compose up 
-docker compose -f compose.cpu.yaml  up 
+docker compose -f compose.cpu.yaml up 
 ```
 
 ## スクリプトの実行方法

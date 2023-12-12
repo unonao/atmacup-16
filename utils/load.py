@@ -55,3 +55,16 @@ def load_yad_data(data_dir: Path) -> pl.DataFrame:
     df = pl.read_csv(yad_file_path)
 
     return df
+
+
+def load_image_embeddings(data_dir: Path, columns: list[str] = None) -> pl.DataFrame:
+    """
+    image_embeddingsデータを読み込む
+    """
+    # ファイルパスを取得
+    image_embeddings_file_path = data_dir / "image_embeddings.parquet"
+
+    # データを読み込む
+    df = pl.read_parquet(image_embeddings_file_path, columns=columns)
+
+    return df
