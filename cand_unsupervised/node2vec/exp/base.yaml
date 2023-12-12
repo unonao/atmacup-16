@@ -8,7 +8,7 @@ node2vec:
   num_epochs: 50
   lr: 0.01
   params:
-    embedding_dim: ${embedding_dim}
+    embedding_dim: ${exp.embedding_dim}
     walk_length: 20
     context_size: 10
     walks_per_node: 10
