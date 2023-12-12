@@ -8,4 +8,4 @@ RUN python3 -m pip install --upgrade pip \
     jupyterlab_code_formatter 
 
 RUN pip install --no-cache-dir \
-    hydra-core 
+    hydra-core implicit
