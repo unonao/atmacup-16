@@ -1,0 +1,5 @@
+fold_path: '/kaggle/working/output/datasets/make_cv/base/train_fold.parquet'
+
+only_last: True
+num_candidate: 100
+k: [1, 5, 10, 50, 100]
