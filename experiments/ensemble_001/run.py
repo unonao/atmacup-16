@@ -90,7 +90,6 @@ def concat_label_pred(cfg, first_df, mode):
         .with_columns(pl.col("pred") * 100.0, pl.lit(1).alias("session_count"))
         .sort(by=["yad_no", "pred", "session_count"], descending=True)
     )
-    print(label_pred_df)
 
     # 予測値作成
     log_df = load_log_data(Path(cfg.dir.data_dir), mode)
@@ -113,13 +112,16 @@ def concat_label_pred(cfg, first_df, mode):
             pl.col("session_count").cast(pl.Int32),
         )
         .drop(["yad_no", "yad_no_label"])
-        .group_by(["session_id", "candidates"])
-        .agg(pl.col("pred").max(), pl.col("session_count").max())
         .select(["session_id", "candidates", "pred", "session_count"])
-        .sort(by=["session_id", "pred"], descending=True)
     )
     # first と結合
-    return pl.concat([first_df, first_df_from_label])
+    result = (
+        pl.concat([first_df, first_df_from_label])
+        .group_by(["session_id", "candidates"])
+        .agg(pl.col("pred").sum(), pl.col("session_count").max())
+        .sort(by=["session_id", "pred"], descending=True)
+    )
+    return result
 
 
 @hydra.main(version_base=None, config_path=".", config_name="config")
