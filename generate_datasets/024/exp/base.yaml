@@ -1,0 +1,37 @@
+fold_path: '/kaggle/working/output/datasets/make_cv/base/train_fold.parquet'
+only_first: False
+
+# sml25 avg_candidates: 37.74279004357495, recall_rate: 0.815107828942355
+# sml50 avg_candidates: 50.36113170163978, recall_rate: 0.8798294411461112
+# sml50,lrg10 avg_candidates: 46.71419614960963, recall_rate: 0.8604805021163985
+# sml100 avg_candidates: 63.93015192346327, recall_rate: 0.9126457405316282
+
+candidate_info_list:
+  - name: 'transition_prob_fix/base'
+    max_num_candidates: 100 # 平均15,16個程度
+    dir: '/kaggle/working/output/cand_unsupervised/transition_prob_fix/base'
+  - name: 'transition_prob_all_fix/base' 
+    max_num_candidates: 100
+    dir: '/kaggle/working/output/cand_unsupervised/transition_prob_all_fix/base'
+  - name: 'ranking_location/sml_cd' 
+    max_num_candidates: 25
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/sml_cd'
+  - name: 'ranking_location/lrg_cd' 
+    max_num_candidates: 25
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/lrg_cd'
+  - name: 'ranking_location_all/sml_cd' 
+    max_num_candidates: 50 # こんなにない
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location_all/sml_cd'
+
+transition_prob_path: '/kaggle/working/output/cand_unsupervised/transition_prob_fix/base/yad2yad_feature.parquet'
+transition_prob_all_path: '/kaggle/working/output/cand_unsupervised/transition_prob_all_fix/base/yad2yad_feature.parquet'
+transition_prob_bidirect_all_path: '/kaggle/working/output/cand_unsupervised/transition_prob_bidirect_all_fix/base/yad2yad_feature.parquet'
+
+feat_transition_prob_location_dir: '/kaggle/working/output/cand_unsupervised/feat_transition_prob_location/base'
+
+yad_feature_paths:
+  - output/cand_unsupervised/ranking/base/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/ken_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/lrg_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/sml_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/wid_cd/yad_feature.parquet

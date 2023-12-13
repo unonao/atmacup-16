@@ -1,3 +1,7 @@
+"""
+1st作るときに水増し
+"""
+
 import os
 import sys
 from pathlib import Path
@@ -31,16 +35,14 @@ categorical_cols = [
 
 logger = None
 ordinal_encoder = None
+log_group_col = ["session_id"]
 
 
 def load_log_data_first_all(cfg, mode: str):
     log_df = load_log_data(Path(cfg.dir.data_dir), mode)
     if cfg.exp.only_first:
-        log_df = (
-            log_df.group_by("session_id")
-            .agg(pl.col("yad_no").last(), pl.col("seq_no").last())
-            .sort(by="session_id")
-        )
+        global log_group_col
+        log_group_col = ["session_id", "seq_no"]
     return log_df
 
 
@@ -59,7 +61,7 @@ def load_yad_data_with_features(cfg):
 def load_and_union_candidates(cfg, mode: str):
     # logデータのsession中のyad_noを候補に加える
     log_df = load_log_data_first_all(cfg, mode)
-    df = log_df.group_by("session_id").agg(pl.col("yad_no").alias("candidates"))
+    df = log_df.group_by(log_group_col).agg(pl.col("yad_no").alias("candidates"))
     dfs = [df]
     for candidate_info in cfg.exp.candidate_info_list:
         df = pl.read_parquet(Path(candidate_info["dir"]) / f"{mode}_candidate.parquet")
@@ -68,13 +70,17 @@ def load_and_union_candidates(cfg, mode: str):
             .list.head(candidate_info["max_num_candidates"])
             .alias("candidates")
         ).filter(pl.col("candidates").list.len() > 0)
+        if "seq_no" in log_group_col:
+            df = log_df.select(log_group_col).join(df, on="session_id", how="left")
         dfs.append(df)
+        if cfg.debug:
+            break
     df = pl.concat(dfs)
     df = (
-        df.group_by("session_id")
+        df.group_by(log_group_col)
         .agg(pl.col("candidates").flatten())
         .with_columns(pl.col("candidates").list.unique())
-    ).select(["session_id", "candidates"])
+    ).select(log_group_col + ["candidates"])
 
     if cfg.debug:
         df = df.with_columns(pl.col("candidates").list.head(2).alias("candidates"))
@@ -85,13 +91,13 @@ def load_and_union_candidates(cfg, mode: str):
     # セッション最後のyad_noを除外
     last_df = (
         load_log_data_first_all(cfg, mode)
-        .group_by("session_id")
+        .group_by(log_group_col)
         .agg(pl.col("yad_no").last().alias("candidates"))
         .with_columns(pl.lit(True).alias("last"))
         .sort(by="session_id")
     )
     candidate_df = (
-        candidate_df.join(last_df, on=["session_id", "candidates"], how="left")
+        candidate_df.join(last_df, on=log_group_col + ["candidates"], how="left")
         .filter(pl.col("last").is_null())
         .drop("last")
     )
@@ -104,23 +110,36 @@ def concat_label_fold(cfg, mode: str, candidate_df):
     validationのスコア計算時にはoriginalを外して計算を行う
     """
     if mode == "train":
+        candidate_df = candidate_df.with_columns(
+            pl.lit(True).alias("original"), pl.lit(False).alias("label")
+        )
+        label_columns = [
+            pl.col("yad_no").alias("candidates"),
+            pl.lit(False).alias("original"),
+            pl.lit(True).alias("label"),
+        ]
+        agg_columns = [pl.sum("original"), pl.sum("label")]
+        if "seq_no" in log_group_col:
+            label_columns.append(pl.lit(0).alias("seq_no").cast(pl.Int64))
+            agg_columns.append(pl.max("seq_no").alias("seq_no"))  # 集約時は最大値を取る
+
+        base_label_df = (
+            load_label_data(Path(cfg.dir.data_dir))
+            .with_columns(label_columns)
+            .drop("yad_no")
+            .select(candidate_df.columns)
+        )
+        print(candidate_df.columns)
+        print(base_label_df.columns)
         candidate_df = (
             pl.concat(
                 [
-                    candidate_df.with_columns(
-                        pl.lit(True).alias("original"), pl.lit(False).alias("label")
-                    ),
-                    load_label_data(Path(cfg.dir.data_dir))
-                    .with_columns(
-                        pl.col("yad_no").alias("candidates"),
-                        pl.lit(False).alias("original"),
-                        pl.lit(True).alias("label"),
-                    )
-                    .drop("yad_no"),
+                    candidate_df,
+                    base_label_df,
                 ]
             )
             .group_by(["session_id", "candidates"])
-            .agg(pl.sum("original"), pl.sum("label"))
+            .agg(agg_columns)
         )
         fold_df = pl.read_parquet(cfg.exp.fold_path)
         candidate_df = candidate_df.join(fold_df, on="session_id")
@@ -137,7 +156,7 @@ def concat_session_feature(cfg, mode: str, candidate_df: pl.DataFrame):
     log_df = load_log_data_first_all(cfg, mode)
     yad_df = load_yad_data_with_features(cfg)
     log_yad_df = log_df.join(yad_df.fill_null(0), on="yad_no")
-    log_yad_df = log_yad_df.group_by(by="session_id").agg(
+    log_yad_df = log_yad_df.group_by(log_group_col).agg(
         [pl.sum(col).name.suffix("_session_sum") for col in numerical_cols]
         + [pl.min(col).name.suffix("_session_min") for col in numerical_cols]
         + [pl.max(col).name.suffix("_session_max") for col in numerical_cols]
@@ -187,7 +206,7 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
     # 同じ candidate の出現回数
     log_df = load_log_data_first_all(cfg, mode)
     tmp = (
-        log_df.group_by(by=["session_id", "yad_no"])
+        log_df.group_by(by=log_group_col + ["yad_no"])
         .agg(pl.count("session_id").alias("appear_count"))
         .with_columns(
             (
@@ -197,8 +216,8 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
         )
     )
     candidate_df = candidate_df.join(
-        tmp.select(["session_id", "candidates", "appear_count", "appear_rate"]),
-        on=["session_id", "candidates"],
+        tmp.select(log_group_col + ["candidates", "appear_count", "appear_rate"]),
+        on=log_group_col + ["candidates"],
         how="left",
     )
 
@@ -207,7 +226,7 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
         log_df = load_log_data_first_all(cfg, mode)
         log_df = (
             log_df.sort(by=["session_id", "seq_no"])
-            .group_by("session_id")
+            .group_by(log_group_col)
             .agg(pl.col("yad_no").alias("candidates"))
             .with_columns(
                 pl.col("candidates").list.get(i),
@@ -215,7 +234,7 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
             )
         )
         candidate_df = candidate_df.join(
-            log_df, on=["session_id", "candidates"], how="left"
+            log_df, on=log_group_col + ["candidates"], how="left"
         )
 
     # 同じ categorical の出現回数
@@ -225,10 +244,10 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
     log_yad_df = log_df.join(yad_df.fill_null(0), on="yad_no")
     for col in categorical_cols:
         tmp = (
-            log_yad_df.group_by(by=["session_id", col])
+            log_yad_df.group_by(by=log_group_col + [col])
             .agg(pl.count("session_id").alias(f"same_{col}_count"))
             .with_columns(
-                pl.col(f"same_{col}_count").sum().over("session_id").alias("seq_sum")
+                pl.col(f"same_{col}_count").sum().over(log_group_col).alias("seq_sum")
             )
             .with_columns(
                 (pl.col(f"same_{col}_count") / pl.col("seq_sum")).alias(
@@ -237,12 +256,12 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
             )
         )
         candidate_df = candidate_df.join(
-            tmp.select(["session_id", col, f"same_{col}_count", f"same_{col}_rate"]),
-            on=["session_id", col],
+            tmp.select(log_group_col + [col, f"same_{col}_count", f"same_{col}_rate"]),
+            on=log_group_col + [col],
             how="left",
         )
 
-    # location ごとの transition prob を追加
+    # session内のyadのlocationからの transition prob を追加
     for location_col in ["sml_cd", "lrg_cd", "ken_cd", "wid_cd"]:
         prob_col = f"transition_prob_{location_col}"
         loc2loc_prob_df = pl.read_parquet(
@@ -257,16 +276,16 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
             log_df.sort(by="session_id").with_columns(
                 pl.col(location_col).alias(f"from_{location_col}")
             )
-        ).select(["session_id", f"from_{location_col}"])
+        ).select(log_group_col + [f"from_{location_col}"])
         log_df = (
             log_df.join(loc2loc_prob_df, on=f"from_{location_col}")
-            .group_by(["session_id", f"to_{location_col}"])
+            .group_by(log_group_col + [f"to_{location_col}"])
             .agg(pl.sum(prob_col).alias(prob_col + "_from_all"))
         )
         candidate_df = candidate_df.join(
             log_df,
-            left_on=["session_id", location_col],
-            right_on=["session_id", f"to_{location_col}"],
+            left_on=log_group_col + [location_col],
+            right_on=log_group_col + [f"to_{location_col}"],
             how="left",
         ).drop("from_yad_no")
 
@@ -274,16 +293,16 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
     yad2yad_prob = pl.read_parquet(cfg.exp.transition_prob_path)
     log_df = load_log_data_first_all(cfg, mode)
     last_log_df = (
-        log_df.group_by("session_id")
+        log_df.group_by(log_group_col)
         .agg(pl.all().sort_by("seq_no").last())
         .sort(by="session_id")
         .with_columns(pl.col("yad_no").alias("from_yad_no"))
-    ).select(["session_id", "from_yad_no"])
+    ).select(log_group_col + ["from_yad_no"])
     last_log_prob_df = last_log_df.join(yad2yad_prob, on="from_yad_no")
     candidate_df = candidate_df.join(
         last_log_prob_df,
-        left_on=["session_id", "candidates"],
-        right_on=["session_id", "to_yad_no"],
+        left_on=log_group_col + ["candidates"],
+        right_on=log_group_col + ["to_yad_no"],
         how="left",
     ).drop("from_yad_no")
 
@@ -293,16 +312,16 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
     log_df = load_log_data_first_all(cfg, mode)
     log_df = (
         log_df.sort(by="session_id").with_columns(pl.col("yad_no").alias("from_yad_no"))
-    ).select(["session_id", "from_yad_no"])
+    ).select(log_group_col + ["from_yad_no"])
     log_df = (
         log_df.join(yad2yad_prob, on="from_yad_no")
-        .group_by(["session_id", "to_yad_no"])
+        .group_by(log_group_col + ["to_yad_no"])
         .agg(pl.sum(prob_col).alias(prob_col + "_from_all"))
     )
     candidate_df = candidate_df.join(
         log_df,
-        left_on=["session_id", "candidates"],
-        right_on=["session_id", "to_yad_no"],
+        left_on=log_group_col + ["candidates"],
+        right_on=log_group_col + ["to_yad_no"],
         how="left",
     ).drop("from_yad_no")
 
@@ -312,16 +331,16 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
     log_df = load_log_data_first_all(cfg, mode)
     log_df = (
         log_df.sort(by="session_id").with_columns(pl.col("yad_no").alias("from_yad_no"))
-    ).select(["session_id", "from_yad_no"])
+    ).select(log_group_col + ["from_yad_no"])
     log_df = (
         log_df.join(yad2yad_prob, on="from_yad_no")
-        .group_by(["session_id", "to_yad_no"])
+        .group_by(log_group_col + ["to_yad_no"])
         .agg(pl.sum(prob_col).alias(prob_col + "_from_all"))
     )
     candidate_df = candidate_df.join(
         log_df,
-        left_on=["session_id", "candidates"],
-        right_on=["session_id", "to_yad_no"],
+        left_on=log_group_col + ["candidates"],
+        right_on=log_group_col + ["to_yad_no"],
         how="left",
     ).drop("from_yad_no")
 
@@ -331,16 +350,16 @@ def concat_session_candidate_feature(cfg, mode: str, candidate_df: pl.DataFrame)
     log_df = load_log_data_first_all(cfg, mode)
     log_df = (
         log_df.sort(by="session_id").with_columns(pl.col("yad_no").alias("from_yad_no"))
-    ).select(["session_id", "from_yad_no"])
+    ).select(log_group_col + ["from_yad_no"])
     log_df = (
         log_df.join(yad2yad_prob, on="from_yad_no")
-        .group_by(["session_id", "to_yad_no"])
+        .group_by(log_group_col + ["to_yad_no"])
         .agg(pl.sum(prob_col).alias(prob_col + "_from_all"))
     )
     candidate_df = candidate_df.join(
         log_df,
-        left_on=["session_id", "candidates"],
-        right_on=["session_id", "to_yad_no"],
+        left_on=log_group_col + ["candidates"],
+        right_on=log_group_col + ["to_yad_no"],
         how="left",
     ).drop("from_yad_no")
 
@@ -367,6 +386,28 @@ def make_datasets(cfg, mode: str):
     candidate_df = concat_session_feature(cfg, mode, candidate_df)
     logger.info(f"concat_session_feature: {candidate_df.shape}")
 
+    # 内容確認
+    if mode == "train":
+        logger.info("train_df")
+        logger.info(candidate_df.head(10))
+        logger.info(candidate_df.shape)
+        logger.info(candidate_df.columns)
+        avg_candidates = len(candidate_df) / candidate_df["session_id"].unique().len()
+        recall_rate = (
+            candidate_df.filter(pl.col("original") == True)["label"].sum()
+            / candidate_df["session_id"].unique().len()
+        )
+        logger.info(f"avg_candidates: {avg_candidates}, recall_rate: {recall_rate}")
+        for i in range(1, 11):
+            cad_df = candidate_df.filter(pl.col("session_count") == i)
+            logger.info(f"session_count: {i}, len: {len(cad_df)}")
+            logger.info(
+                f"session_count: {i}, avg_candidates: {len(cad_df) / cad_df['session_id'].unique().len()}"
+            )
+            logger.info(
+                f"session_count: {i}, recall_rate: {cad_df.filter(pl.col('original') == True)['label'].sum() / cad_df['session_id'].unique().len()}"
+            )
+
     candidate_df = concat_candidate_feature(cfg, mode, candidate_df)
     logger.info(f"concat_candidate_feature: {candidate_df.shape}")
 
@@ -383,19 +424,6 @@ def make_datasets(cfg, mode: str):
     )
     # 型変換
     candidate_df = convert_to_32bit(candidate_df)
-
-    # 内容確認
-    if mode == "train":
-        logger.info("train_df")
-        logger.info(candidate_df.head(10))
-        logger.info(candidate_df.shape)
-        logger.info(candidate_df.columns)
-        avg_candidates = len(candidate_df) / candidate_df["session_id"].unique().len()
-        recall_rate = (
-            candidate_df.filter(pl.col("original") == True)["label"].sum()
-            / candidate_df["session_id"].unique().len()
-        )
-        logger.info(f"avg_candidates: {avg_candidates}, recall_rate: {recall_rate}")
 
     return candidate_df
 
