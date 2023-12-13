@@ -1,0 +1,17 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+
+implicit:
+  model: als # bpr, als
+  params:
+    factors: 100
+    regularization: 0.01
+    alpha: 1.0
+    iterations: 15
+    calculate_training_loss: True
+    random_state: ${seed}
+    # only cpu
+    use_native: True
+    use_cg: True
+    num_threads: 0

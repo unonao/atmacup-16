@@ -1,0 +1,13 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+implicit:
+  model: bpr # bpr, als
+  params:
+    factors: 16
+    learning_rate: 0.01
+    regularization: 0.01
+    iterations: 100
+    verify_negative_samples: True 
+    random_state: ${seed}
+    num_threads: 0
