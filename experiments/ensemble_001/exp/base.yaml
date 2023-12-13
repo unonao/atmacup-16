@@ -1,0 +1,5 @@
+other_dirs:
+  - output/exp/008_split/base
+
+first_dirs:
+  - output/exp/008_split/first
