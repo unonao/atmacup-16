@@ -1,0 +1,9 @@
+num_candidate: 10
+k: [1, 5, 10]
+
+location: sml_cd
+
+
+implicit:
+  model: bpr # bpr, als
+  params:

@@ -1,0 +1,23 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+location: sml_cd
+
+
+implicit:
+  model: als # bpr, als
+  params:
+    factors: 16
+    regularization: 0.01
+    alpha: 1.0
+    iterations: 15
+    calculate_training_loss: True
+    random_state: ${seed}
+    # only cpu
+    use_native: True
+    use_cg: True
+    num_threads: 0
+
+# {'k': 1, 'avg_num_candidates': 1.0, 'recall': 0.3211833819423758, 'precision': 0.3211833819423758, 'map@k': 0.3211833819423758}
+# {'k': 5, 'avg_num_candidates': 5.0, 'recall': 0.4097430532944461, 'precision': 0.08194861065888923, 'map@k': 0.3564728539858261}
+# {'k': 10, 'avg_num_candidates': 10.0, 'recall': 0.47877366659969933, 'precision': 0.047877366659969924, 'map@k': 0.365805346158951}

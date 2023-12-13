@@ -1,0 +1,49 @@
+fold_path: '/kaggle/working/output/datasets/make_cv/base/train_fold.parquet'
+only_first: False
+
+# avg_candidates: 37.74279004357495, recall_rate: 0.815107828942355
+candidate_info_list:
+  - name: 'transition_prob_fix/base'
+    max_num_candidates: 100 # 平均15,16個程度
+    dir: '/kaggle/working/output/cand_unsupervised/transition_prob_fix/base'
+  - name: 'transition_prob_all_fix/base' 
+    max_num_candidates: 100
+    dir: '/kaggle/working/output/cand_unsupervised/transition_prob_all_fix/base'
+  - name: 'ranking_location/sml_cd' 
+    max_num_candidates: 25
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/sml_cd'
+  - name: 'ranking_location/lrg_cd' 
+    max_num_candidates: 25
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/lrg_cd'
+  - name: 'ranking_location_all/sml_cd' 
+    max_num_candidates: 50 # こんなにない
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location_all/sml_cd'
+
+session2location_candidate_info_list:
+  - name: 'feat_session2location/bpr_sml_001' 
+    location: sml_cd
+    max_num_candidates: 0
+    dir: '/kaggle/working/output/cand_unsupervised/feat_session2location/bpr_sml_001'
+  - name: 'feat_session2location/bpr_lrg' 
+    location: lrg_cd
+    max_num_candidates: 0
+    dir: '/kaggle/working/output/cand_unsupervised/feat_session2location/bpr_lrg'
+
+session2location_factor_info_list:
+  - dir: "/kaggle/working/output/cand_unsupervised/feat_session2location/bpr_sml"
+    location: sml_cd
+factor_num: 16
+
+
+transition_prob_path: '/kaggle/working/output/cand_unsupervised/transition_prob_fix/base/yad2yad_feature.parquet'
+transition_prob_all_path: '/kaggle/working/output/cand_unsupervised/transition_prob_all_fix/base/yad2yad_feature.parquet'
+transition_prob_bidirect_all_path: '/kaggle/working/output/cand_unsupervised/transition_prob_bidirect_all_fix/base/yad2yad_feature.parquet'
+
+feat_transition_prob_location_dir: '/kaggle/working/output/cand_unsupervised/feat_transition_prob_location/base'
+
+yad_feature_paths:
+  - output/cand_unsupervised/ranking/base/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/ken_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/lrg_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/sml_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/wid_cd/yad_feature.parquet

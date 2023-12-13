@@ -1,0 +1,21 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+location: sml_cd
+
+implicit:
+  model: bpr # bpr, als
+  params:
+    factors: 32
+    learning_rate: 0.01
+    regularization: 0.01
+    iterations: 100
+    verify_negative_samples: True 
+    random_state: ${seed}
+    num_threads: 0
+
+
+
+#{'k': 1, 'avg_num_candidates': 1.0, 'recall': 0.8105390407969574, 'precision': 0.8105390407969574, 'map@k': 0.8105390407969574}
+#{'k': 5, 'avg_num_candidates': 5.0, 'recall': 0.9022300119848423, 'precision': 0.18044600239696842, 'map@k': 0.8505565793089436}
+#{'k': 10, 'avg_num_candidates': 10.0, 'recall': 0.908755862527624, 'precision': 0.0908755862527624, 'map@k': 0.8514503292120388}
