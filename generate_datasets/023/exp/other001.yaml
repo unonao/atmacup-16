@@ -1,0 +1,8 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+only_first: False
+
+
+session2location_factor_info_list: []
+factor_num: 16
