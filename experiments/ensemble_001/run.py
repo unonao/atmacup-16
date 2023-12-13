@@ -146,32 +146,32 @@ def main(cfg: DictConfig) -> None:
 
     with utils.trace("eval"):
         oof_candidate_df = make_eval_df(cfg, other_oof_df, first_oof_df)
-        print(oof_candidate_df.head())
+        logger.info(oof_candidate_df.head())
         metrics = calculate_metrics(
             oof_candidate_df, candidates_col="candidates", label_col="yad_no", k=[10]
         )
-        print(metrics)
+        logger.info(metrics)
 
     with utils.trace("submission"):
         test_submission_df = make_submission(cfg, other_test_df, first_test_df)
-        print(test_submission_df.head())
+        logger.info(test_submission_df.head())
         test_submission_df.write_csv(output_path / "submission.csv")
 
     with utils.trace("post process for eval"):
         oof_candidate_df = make_eval_df(
             cfg, other_oof_df, concat_label_pred(cfg, first_oof_df, "train")
         )
-        print(oof_candidate_df.head())
+        logger.info(oof_candidate_df.head())
         metrics = calculate_metrics(
             oof_candidate_df, candidates_col="candidates", label_col="yad_no", k=[10]
         )
-        print(metrics)
+        logger.info(metrics)
 
     with utils.trace("post process for submission"):
         test_submission_df = make_submission(
             cfg, other_test_df, concat_label_pred(cfg, first_test_df, "test")
         )
-        print(test_submission_df.head())
+        logger.info(test_submission_df.head())
         test_submission_df.write_csv(output_path / "submission_pp.csv")
 
 
