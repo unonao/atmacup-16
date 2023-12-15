@@ -415,6 +415,15 @@ def make_datasets(cfg, mode: str):
             / candidate_df["session_id"].unique().len()
         )
         logger.info(f"avg_candidates: {avg_candidates}, recall_rate: {recall_rate}")
+        for i in range(1, 11):
+            cad_df = candidate_df.filter(pl.col("session_count") == i)
+            logger.info(f"session_count: {i}, len: {len(cad_df)}")
+            logger.info(
+                f"session_count: {i}, avg_candidates: {len(cad_df) / cad_df['session_id'].unique().len()}"
+            )
+            logger.info(
+                f"session_count: {i}, recall_rate: {cad_df.filter(pl.col('original') == True)['label'].sum() / cad_df['session_id'].unique().len()}"
+            )
 
     return candidate_df
 

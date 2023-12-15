@@ -1,0 +1,23 @@
+
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+only_first: True
+
+
+candidate_info_list:
+  - name: 'ranking_location/sml_cd' 
+    max_num_candidates: 5
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/sml_cd'
+  - name: 'ranking_location/lrg_cd' 
+    max_num_candidates: 5
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/lrg_cd'
+  - name: 'ranking_location_all/sml_cd' 
+    max_num_candidates: 30
+    dir: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/two002'
+
+
+#avg_candidates: 28.318883400647042, recall_rate: 0.8069089498368537
+#session_count: 1, len: 5216339
+#session_count: 1, avg_candidates: 28.137718058537324
+#session_count: 1, recall_rate: 0.6996375130808151
