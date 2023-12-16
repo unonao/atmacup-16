@@ -1,0 +1,14 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+other_dirs:
+  - output/exp/008_split/base
+
+first_dirs:
+  - output/exp/008_split/v025_003_first
+
+
+transision_path: output/cand_unsupervised/personalized_pagerank/base/yad2yad_feature.parquet
+score_col: score
+
+# map@k: 0.4058750771251377

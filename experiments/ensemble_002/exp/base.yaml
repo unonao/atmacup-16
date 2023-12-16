@@ -1,0 +1,8 @@
+other_dirs:
+  - output/exp/008_split/base
+
+first_dirs:
+  - output/exp/008_split/first
+
+transision_path: output/cand_unsupervised/prob_matrix_filter/two002/yad2yad_feature.parquet
+score_col: transition_prob

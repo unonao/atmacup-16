@@ -1,0 +1,14 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+other_dirs:
+  - output/exp/008_split/base
+
+first_dirs:
+  - output/exp/008_split/v025_003_first
+
+
+transision_path: output/cand_unsupervised/prob_matrix_filter/base/yad2yad_feature.parquet
+score_col: transition_prob
+
+# [2023-12-16 04:35:19,211 : INFO - run.py] [{'k': 10, 'avg_num_candidates': 9.991298865942957, 'recall': 0.6113932205973024, 'precision': 0.06113932205973026, 'map@k': 0.4074124336223485}]

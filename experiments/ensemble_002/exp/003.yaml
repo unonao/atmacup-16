@@ -1,0 +1,11 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+other_dirs:
+  - output/exp/008_split/base
+
+first_dirs:
+  - output/exp/008_split/v025_003_first
+
+# [2023-12-16 04:32:29,829 : INFO - run.py] [{'k': 10, 'avg_num_candidates': 9.991298865942957, 'recall': 0.6098448898156551, 'precision': 0.060984488981565506, 'map@k': 0.40712217314583815}]
+# [2023-12-16 04:32:48,623 : INFO - run.py] [{'k': 10, 'avg_num_candidates': 9.991298865942957, 'recall': 0.6115975864051708, 'precision': 0.06115975864051706, 'map@k': 0.40757911243990125}]
