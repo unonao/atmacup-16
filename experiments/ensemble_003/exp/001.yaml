@@ -1,0 +1,9 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+
+
+transision_path: output/cand_supervised/prob_matrix_filter/two002/yad2yad_feature.parquet
+score_col: transition_prob
+
+# 0.4219358777948549
