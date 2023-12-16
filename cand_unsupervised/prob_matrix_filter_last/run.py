@@ -156,11 +156,14 @@ def my_app(cfg: DictConfig) -> None:
     with utils.timer("make candidates"):
 
         def make_candidates(log_df, session_df, transition_df):
+            # session_id ごとに最後の yad_no を取得する
             log_df = (
-                log_df.sort(by="session_id").with_columns(
-                    pl.col("yad_no").alias("from_yad_no")
-                )
+                log_df.group_by("session_id")
+                .agg(pl.all().sort_by("seq_no").last())
+                .sort(by="session_id")
+                .with_columns(pl.col("yad_no").alias("from_yad_no"))
             ).select(["session_id", "from_yad_no"])
+
             candidate_df = (
                 log_df.join(transition_df, on="from_yad_no")
                 .group_by(["session_id", "to_yad_no"])

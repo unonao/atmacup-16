@@ -2,7 +2,8 @@
 defaults:
   - base@_here_ # ベースの設定ファイルを指定する
 
-datasets_dir: /kaggle/working/output/datasets/026_multi_prob_matrix/first
+
+datasets_dir: /kaggle/working/output/datasets/025_add_prob_matrix/first005
 only_first: True
 
 lgbm:
