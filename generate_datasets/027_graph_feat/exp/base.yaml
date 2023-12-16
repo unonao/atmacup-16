@@ -1,0 +1,38 @@
+fold_path: '/kaggle/working/output/datasets/make_cv/base/train_fold.parquet'
+only_first: False
+
+#avg_candidates: 52.967568185439454, recall_rate: 0.9137437737705145
+#session_count: 1, len: 9673650
+#session_count: 1, avg_candidates: 52.18112478827959
+#session_count: 1, recall_rate: 0.8657126212335343
+#session_count: 2, len: 4496689
+#session_count: 2, avg_candidates: 54.312429794789416
+#session_count: 2, recall_rate: 0.9999154517894024
+
+candidate_info_list:
+  - name: 'ranking_location/sml_cd' 
+    max_num_candidates: 20
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/sml_cd'
+  - name: 'ranking_location/lrg_cd' 
+    max_num_candidates: 20
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/lrg_cd'
+  - name: 'prob_matrix_filter/two002' 
+    max_num_candidates: 60
+    dir: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/two002'
+
+transition_prob_path: '/kaggle/working/output/cand_unsupervised/transition_prob_fix/base/yad2yad_feature.parquet'
+transition_prob_all_path: '/kaggle/working/output/cand_unsupervised/transition_prob_all_fix/base/yad2yad_feature.parquet'
+transition_prob_bidirect_all_path: '/kaggle/working/output/cand_unsupervised/transition_prob_bidirect_all_fix/base/yad2yad_feature.parquet'
+
+prob_matrix_path: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/two002/yad2yad_feature.parquet'
+
+feat_transition_prob_location_dir: '/kaggle/working/output/cand_unsupervised/feat_transition_prob_location/base'
+
+yad_feature_paths:
+  - output/cand_unsupervised/ranking/base/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/ken_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/lrg_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/sml_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/wid_cd/yad_feature.parquet
+  - output/cand_unsupervised/feat_graph/base/yad_feature.parquet
+
