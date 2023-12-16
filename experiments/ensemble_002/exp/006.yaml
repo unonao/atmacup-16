@@ -1,0 +1,14 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+other_dirs:
+  - output/exp/008_split/base
+
+first_dirs:
+  - output/exp/008_split/v025_003_first
+
+
+transision_path: output/cand_supervised/prob_matrix_filter/two002/yad2yad_feature.parquet
+score_col: transition_prob
+
+# map@k: 0.42195763667795
