@@ -12,13 +12,13 @@ candidate_info_list:
     max_num_candidates: 10
     dir: '/kaggle/working/output/cand_unsupervised/ranking_location/lrg_cd'
   - name: 'prob_matrix_filter/two002' 
-    max_num_candidates: 50
+    max_num_candidates: 60
     dir: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/two002'
   - name: 'prob_matrix_filter/three' 
-    max_num_candidates: 40
+    max_num_candidates: 60
     dir: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/three'
 
-#avg_candidates: 46.88732862714671, recall_rate: 0.8919043429466086
-#session_count: 1, len: 8634146
-#session_count: 1, avg_candidates: 46.573883680536824
-#session_count: 1, recall_rate: 0.8317510491622884
+#avg_candidates: 59.9339032483772, recall_rate: 0.9181185875897997
+#session_count: 1, len: 11050403
+#session_count: 1, avg_candidates: 59.607537786024835
+#session_count: 1, recall_rate: 0.8725308275705824

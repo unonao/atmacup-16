@@ -29,6 +29,8 @@ prob_matrix_info_list:
     path: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/base/yad2yad_feature.parquet'
   - name: 'two002'
     path: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/two002/yad2yad_feature.parquet'
+  - name: 'three'
+    path: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/three/yad2yad_feature.parquet'
 
 feat_transition_prob_location_dir: '/kaggle/working/output/cand_unsupervised/feat_transition_prob_location/base'
 
@@ -37,4 +39,4 @@ yad_feature_paths:
   - output/cand_unsupervised/ranking_location/ken_cd/yad_feature.parquet
   - output/cand_unsupervised/ranking_location/lrg_cd/yad_feature.parquet
   - output/cand_unsupervised/ranking_location/sml_cd/yad_feature.parquet
-  - output/cand_unsupervised/ranking_location/wid_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/wid_cd/yad_feature.parquet 

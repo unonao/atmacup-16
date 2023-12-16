@@ -14,11 +14,11 @@ candidate_info_list:
   - name: 'prob_matrix_filter/two002' 
     max_num_candidates: 30
     dir: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/two002'
-  - name: 'prob_matrix_filter/five' 
+  - name: 'prob_matrix_filter/three' 
     max_num_candidates: 30
-    dir: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/five'
+    dir: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/three'
 
-#avg_candidates: 31.52505732634102, recall_rate: 0.824172664860858
-#session_count: 1, len: 5890351
-#session_count: 1, avg_candidates: 31.773440281358894
-#session_count: 1, recall_rate: 0.7264949888341083
+#avg_candidates: 32.41588441901226, recall_rate: 0.8302586093426348
+#session_count: 1, len: 6037660
+#session_count: 1, avg_candidates: 32.5680472096059
+#session_count: 1, recall_rate: 0.7359671172580454
