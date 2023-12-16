@@ -1,0 +1,19 @@
+
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+only_first: True
+
+candidate_info_list:
+  - name: 'ranking_location/sml_cd' 
+    max_num_candidates: 10
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/sml_cd'
+  - name: 'ranking_location/lrg_cd' 
+    max_num_candidates: 10
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/lrg_cd'
+  - name: 'prob_matrix_filter/two002' 
+    max_num_candidates: 50
+    dir: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/two002'
+  - name: 'prob_matrix_filter/five' 
+    max_num_candidates: 40
+    dir: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/five'
