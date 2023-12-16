@@ -1,0 +1,53 @@
+datasets_dir: /kaggle/working/output/datasets/028_limit_seq/base
+limit_seq: # null: all
+
+one_epoch: False
+
+lgbm:
+  cat_cols: []
+  unuse_cols: 
+    - yad_no
+    - session_id
+    - original
+    - label
+    - fold
+    - candidates
+    - yad_type
+    - wid_cd
+    - ken_cd
+    - lrg_cd
+    - sml_cd
+    - session_count
+    - same_ken_cd_count
+    - same_win_cd_count
+    - same_sml_cd_count
+    - same_lrg_cd_count
+  label_col: label
+  verbose_eval: 100
+  num_boost_round: 4000
+  early_stopping_round: 50
+  downsampling_rate: 1.0
+  ndcg_eval_at: [5, 10]
+  params:
+    learning_rate: 0.1
+    metric: [map, ndcg, auc]
+    objective: lambdarank
+    ndcg_eval_at: []
+    lambda_l1: 0.1
+    lambda_l2: 0.1
+    num_leaves: 32
+    feature_fraction: 0.8
+    bagging_fraction: 0.8
+    bagging_freq: 1
+    min_child_samples: 10
+    task: train
+    boosting_type: gbdt
+    first_metric_only: true
+    max_depth: 8
+    num_thread: -1
+    max_bin: 256 # 大きいほどfitする
+    verbose: -1
+    device: cpu
+    scale_pos_weight: 1
+    seed: ${seed}
+    num_class: 1

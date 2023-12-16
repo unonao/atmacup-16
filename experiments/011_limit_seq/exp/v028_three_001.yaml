@@ -1,0 +1,7 @@
+
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+
+datasets_dir: /kaggle/working/output/datasets/028_limit_seq/three_001
+limit_seq: 3

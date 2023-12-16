@@ -1,0 +1,5 @@
+
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+limit_seq: 2 # null: all, 1: 1以下, 2: 2以下, ...
