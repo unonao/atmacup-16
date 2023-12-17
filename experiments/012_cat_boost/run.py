@@ -5,6 +5,7 @@ import sys
 import time
 from pathlib import Path
 
+import catboost as cb
 import hydra
 import lightgbm as lgb
 import matplotlib.pyplot as plt
@@ -26,11 +27,11 @@ logger = None
 
 
 def train_one_fold(
-    cfg: DictConfig, train_df: pl.DataFrame, valid_df: pl.DataFrame
+    cfg: DictConfig, train_df: pl.DataFrame, valid_df: pl.DataFrame, output_dir: Path
 ) -> lgb.Booster:
-    unuse_cols = cfg.exp.lgbm.unuse_cols
+    unuse_cols = cfg.exp.model.unuse_cols
     feature_cols = [col for col in train_df.columns if col not in unuse_cols]
-    label_col = cfg.exp.lgbm.label_col
+    label_col = cfg.exp.model.label_col
     train_df = train_df.sort(by=["session_id"])
     valid_df = valid_df.sort(by=["session_id"])
     X_train = train_df[feature_cols]
@@ -38,66 +39,85 @@ def train_one_fold(
     X_valid = valid_df[feature_cols]
     y_valid = valid_df[label_col]
 
-    lgb_train_dataset = lgb.Dataset(
-        X_train,
-        label=np.array(y_train),
-        feature_name=feature_cols,
-    )
-    lgb_valid_dataset = lgb.Dataset(
-        X_valid,
-        label=np.array(y_valid),
-        feature_name=feature_cols,
-    )
-
-    if (cfg.exp.lgbm.params.objective == "lambdarank") or (
-        cfg.exp.lgbm.params.objective == "rank_xendcg"
-    ):
-        train_group = (
-            train_df["session_id"]
-            .value_counts(parallel=True)
-            .sort(by="session_id")["counts"]
-            .to_list()
+    if cfg.exp.model.name == "catboost":
+        train_pool = cb.Pool(
+            X_train.to_numpy(),
+            label=np.array(y_train),
+            cat_features=list(cfg.exp.model.cat_cols),
+            group_id=train_df["session_id"].to_numpy(),
         )
-        valid_group = (
-            valid_df["session_id"]
-            .value_counts(parallel=True)
-            .sort(by="session_id")["counts"]
-            .to_list()
+        valid_pool = cb.Pool(
+            X_valid.to_numpy(),
+            label=np.array(y_valid),
+            cat_features=list(cfg.exp.model.cat_cols),
+            group_id=valid_df["session_id"].to_numpy(),
         )
-        lgb_train_dataset.set_group(train_group)
-        lgb_valid_dataset.set_group(valid_group)
-        cfg.exp.lgbm.params["ndcg_eval_at"] = cfg.exp.lgbm.ndcg_eval_at
 
-    bst = lgb.train(
-        OmegaConf.to_container(cfg.exp.lgbm.params, resolve=True),
-        lgb_train_dataset,
-        num_boost_round=cfg.exp.lgbm.num_boost_round,
-        valid_sets=[lgb_train_dataset, lgb_valid_dataset],
-        valid_names=["train", "valid"],
-        categorical_feature=cfg.exp.lgbm.cat_cols,
-        callbacks=[
-            wandb_callback(),
-            lgb.early_stopping(
-                stopping_rounds=cfg.exp.lgbm.early_stopping_round, verbose=True
-            ),
-            lgb.log_evaluation(cfg.exp.lgbm.verbose_eval),
-        ],
-    )
-    log_summary(bst, save_model_checkpoint=True)
-    logger.info(
-        f"best_itelation: {bst.best_iteration}, train: {bst.best_score['train']}, valid: {bst.best_score['valid']}"
-    )
-    return bst
+        model = cb.CatBoostRanker(**cfg.exp.model.params)
+        model.fit(
+            train_pool,
+            eval_set=valid_pool,
+            plot=True,
+            plot_file=str(output_dir / "catboost.png"),
+        )
+
+    else:
+        lgb_train_dataset = lgb.Dataset(
+            X_train,
+            label=np.array(y_train),
+            feature_name=feature_cols,
+        )
+        lgb_valid_dataset = lgb.Dataset(
+            X_valid,
+            label=np.array(y_valid),
+            feature_name=feature_cols,
+        )
+
+        if cfg.exp.model.params.objective == "lambdarank":
+            train_group = (
+                train_df["session_id"]
+                .value_counts(parallel=True)
+                .sort(by="session_id")["counts"]
+                .to_list()
+            )
+            valid_group = (
+                valid_df["session_id"]
+                .value_counts(parallel=True)
+                .sort(by="session_id")["counts"]
+                .to_list()
+            )
+            lgb_train_dataset.set_group(train_group)
+            lgb_valid_dataset.set_group(valid_group)
+            cfg.exp.model.params["ndcg_eval_at"] = cfg.exp.model.ndcg_eval_at
+
+        model = lgb.train(
+            OmegaConf.to_container(cfg.exp.model.params, resolve=True),
+            lgb_train_dataset,
+            num_boost_round=cfg.exp.model.num_boost_round,
+            valid_sets=[lgb_train_dataset, lgb_valid_dataset],
+            valid_names=["train", "valid"],
+            categorical_feature=cfg.exp.model.cat_cols,
+            callbacks=[
+                wandb_callback(),
+                lgb.early_stopping(
+                    stopping_rounds=cfg.exp.model.early_stopping_round, verbose=True
+                ),
+                lgb.log_evaluation(cfg.exp.model.verbose_eval),
+            ],
+        )
+        log_summary(model, save_model_checkpoint=True)
+        logger.info(
+            f"best_itelation: {model.best_iteration}, train: {model.best_score['train']}, valid: {model.best_score['valid']}"
+        )
+    return model
 
 
-def predict_one_fold(
-    cfg: DictConfig, bst: lgb.Booster, test_df: pd.DataFrame
-) -> pd.DataFrame:
-    unuse_cols = cfg.exp.lgbm.unuse_cols
+def predict_one_fold(cfg: DictConfig, model, test_df: pd.DataFrame) -> pd.DataFrame:
+    unuse_cols = cfg.exp.model.unuse_cols
     feature_cols = [col for col in test_df.columns if col not in unuse_cols]
 
-    X_test = test_df[feature_cols]
-    y_pred = bst.predict(X_test)
+    X_test = test_df[feature_cols].to_numpy()
+    y_pred = model.predict(X_test)
     return y_pred
 
 
@@ -162,14 +182,14 @@ def main(cfg: DictConfig) -> None:
         valid_fold_df = train_df.filter(pl.col("fold") == fold)
 
         # train の負例をダウンサンプリング
-        if cfg.exp.lgbm.downsampling_rate:
+        if cfg.exp.model.downsampling_rate:
             train_positive_fold_df = train_fold_df.filter(
-                pl.col(cfg.exp.lgbm.label_col) == 1
+                pl.col(cfg.exp.model.label_col) == 1
             )
             logger.info(f"train_positive_fold_df: {train_positive_fold_df.shape}")
             train_negative_fold_df = train_fold_df.filter(
-                pl.col(cfg.exp.lgbm.label_col) == 0
-            ).sample(fraction=cfg.exp.lgbm.downsampling_rate, seed=cfg.seed)
+                pl.col(cfg.exp.model.label_col) == 0
+            ).sample(fraction=cfg.exp.model.downsampling_rate, seed=cfg.seed)
             logger.info(f"train_negative_fold_df: {train_negative_fold_df.shape}")
             train_fold_df = pl.concat([train_positive_fold_df, train_negative_fold_df])
 
@@ -182,9 +202,10 @@ def main(cfg: DictConfig) -> None:
             use_valid_fold_df = use_valid_fold_df.filter(pl.col("session_count") == 1)
         else:
             use_valid_fold_df = use_valid_fold_df.filter(pl.col("session_count") != 1)
-        bst = train_one_fold(cfg, train_fold_df, use_valid_fold_df)
+        bst = train_one_fold(cfg, train_fold_df, use_valid_fold_df, output_path)
 
-        save_model(cfg, bst, output_path, fold)
+        if cfg.exp.model.name == "lightgbm":
+            save_model(cfg, bst, output_path, fold)
 
         # valid
         y_valid_pred = predict_one_fold(cfg, bst, valid_fold_df)

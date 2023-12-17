@@ -1,0 +1,39 @@
+
+
+datasets_dir: /kaggle/working/output/datasets/025_add_prob_matrix/base
+only_first: False
+
+one_epoch: False
+
+model:
+  name: catboost
+  cat_cols: []
+  unuse_cols: 
+    - yad_no
+    - session_id
+    - original
+    - label
+    - fold
+    - candidates
+    - yad_type
+    - wid_cd
+    - ken_cd
+    - lrg_cd
+    - sml_cd
+    - session_count
+    - same_ken_cd_count
+    - same_win_cd_count
+    - same_sml_cd_count
+    - same_lrg_cd_count
+  label_col: label
+  downsampling_rate: 1.0
+  ndcg_eval_at: [5, 10]
+  params:
+    early_stopping_rounds: 50
+    loss_function: YetiRank
+    iterations: 1000
+    verbose: 10
+    learning_rate: 0.01
+    use_best_model: True
+    eval_metric: QueryRMSE
+    random_seed: 42
