@@ -1,0 +1,35 @@
+
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+
+datasets_dir: /kaggle/working/output/datasets/030_train_test_feat/other001
+only_first: False
+
+
+lgbm:
+  ndcg_eval_at: [10]
+  params:
+    num_iterations: 4000
+    early_stopping_round: 50
+    learning_rate: 0.1
+    lambda_l1: 0.1
+    lambda_l2: 0.1
+    num_leaves: 32
+    feature_fraction: 0.8
+    bagging_fraction: 0.8
+    bagging_freq: 1
+    min_child_samples: 10
+    task: train
+    boosting_type: gbdt
+    objective: binary
+    first_metric_only: true
+    metric: [auc, binary_logloss]
+    max_depth: 8
+    num_thread: -1
+    max_bin: 256 # 大きいほどfitする
+    verbose: -1
+    device: cpu
+    scale_pos_weight: 1
+    seed: ${seed}
+    num_class: 1

@@ -1,24 +1,16 @@
-"""
-logの出現遷移を使って遷移確率行列を作る
-"""
-import logging
 import os
-import pickle
 import sys
-import time
 from pathlib import Path
 
 import hydra
-import lightgbm as lgb
-import matplotlib.pyplot as plt
+import igraph as ig
 import numpy as np
-import pandas as pd
 import polars as pl
 import scipy.sparse as sparse
 from hydra.core.hydra_config import HydraConfig
+from igraph import Graph
 from omegaconf import DictConfig, OmegaConf
 from scipy.sparse import csr_matrix, eye
-from sklearn.preprocessing import normalize
 from tqdm.auto import tqdm
 
 import utils
@@ -31,7 +23,7 @@ from utils.metrics import calculate_metrics
 @hydra.main(version_base=None, config_path=".", config_name="config")
 def my_app(cfg: DictConfig) -> None:
     runtime_choices = HydraConfig.get().runtime.choices
-    exp_name = f"supervised-{Path(sys.argv[0]).parent.name}/{runtime_choices.exp}"
+    exp_name = f"{Path(sys.argv[0]).parent.name}/{runtime_choices.exp}"
 
     wandb.init(
         project="atmaCup16-candidate",
@@ -49,7 +41,6 @@ def my_app(cfg: DictConfig) -> None:
         train_log_df = load_log_data(Path(cfg.dir.data_dir), "train")
         train_label_df = load_label_data(Path(cfg.dir.data_dir))
         test_log_df = load_log_data(Path(cfg.dir.data_dir), "test")
-        yad_df = load_yad_data(Path(cfg.dir.data_dir))
 
         # 最後にlabelが来るとしたときのseq_noを計算しておく
         last_seq_df = train_log_df.group_by("session_id").agg(
@@ -61,8 +52,10 @@ def my_app(cfg: DictConfig) -> None:
         for i in range(cfg.exp.test_iter):
             dfs.append(test_log_df.with_columns(pl.col("session_id") + f"_{i}"))
         all_log_df = pl.concat(dfs).sort(["session_id", "seq_no"])
-
-    with utils.timer("map yid"):
+    """
+    グラフ作成
+    """
+    with utils.trace("making graph"):
         # 連番に変換
         all_log_cast_df = all_log_df.with_columns(
             pl.col("yad_no").cast(str).cast(pl.Categorical).to_physical().alias("yid"),
@@ -72,47 +65,11 @@ def my_app(cfg: DictConfig) -> None:
         unique_yids = unique_df["yid"].to_numpy()
         unique_yad_nos = unique_df["yad_no"].to_list()
         yid2yad_no = dict(zip(unique_yids, unique_yad_nos))
-        yad_no2yid = dict(zip(unique_yad_nos, unique_yids))
 
-    with utils.timer("create location map"):
-        # idに変換
-        yad_id_df = yad_df.with_columns(
-            pl.col("yad_no").map_dict(yad_no2yid).cast(pl.UInt32).alias("yid")
-        ).drop("yad_no")
-
-        # yad_no の出現回数を計算し、from_yad_noでの合計が1になるような weightを計算する
-        yad_with_counts = yad_id_df.select(["yid", "sml_cd"]).join(
-            all_log_cast_df.unique(["session_id", "yid"])["yid"].value_counts(),
-            on="yid",
-        )
-
-        # 同じlocationからlocationへのyad_noのペアを作る
-        yad2yad_location_df = (
-            (
-                yad_id_df.select(["yid", "sml_cd"])
-                .join(
-                    yad_with_counts,
-                    on="sml_cd",
-                    how="outer",
-                )
-                .rename({"yid": "from_id", "yid_right": "to_id"})
-                .with_columns(
-                    (pl.col("counts") / pl.col("counts").sum().over("from_id")).alias(
-                        "weight"
-                    )
-                )
-                .drop("counts")
-            )
-            .drop("sml_cd")
-            .drop_nulls()
-        )
-
-        yad2yad_location_df.head()
-
-    with utils.timer("create transition"):
         # 遷移を作成
         transition_dfs = []
-        for rti in cfg.exp.range_transitions:
+
+        for rti in [-1, 1]:
             if rti == 0:
                 continue
             df = (
@@ -122,101 +79,62 @@ def my_app(cfg: DictConfig) -> None:
                 )
                 .filter(~pl.col("to_id").is_null())
                 .filter(pl.col("from_id") != pl.col("to_id"))  # 同じものへは遷移しない
-                .select(["session_id", "from_id", "to_id"])
+                .select(["from_id", "to_id"])
             )
             transition_dfs.append(df)
-        transition_df = (
-            pl.concat(transition_dfs)
-            .unique(["session_id", "from_id", "to_id"])
-            .drop("session_id")
-        )
+        transition_df = pl.concat(transition_dfs)
 
-        transition_df = (
-            transition_df.group_by(["from_id", "to_id"])
-            .agg(pl.col("from_id").count().alias("counts"))
-            .with_columns(
-                (pl.col("counts") / pl.col("counts").sum().over("from_id")).alias(
-                    "weight"
-                )
-            )
-            .drop("counts")
-        )
-
-    with utils.timer("join"):
-        transition_with_location_df = pl.concat(
-            [
-                transition_df.with_columns(
-                    pl.col("weight") * (1 - cfg.exp.location_prob)
-                ),
-                yad2yad_location_df.with_columns(
-                    pl.col("weight") * cfg.exp.location_prob
-                ),
-            ]
-        )
-
-    with utils.timer("create transition matrix"):
-        # 疎行列の作成
-
-        sparse_matrix = sparse.csr_matrix(
+        # 行列の作成
+        matrix = sparse.csr_matrix(
             (
-                transition_with_location_df["weight"].to_numpy(),
+                np.ones(len(transition_df)),
                 (
-                    transition_with_location_df["from_id"].to_numpy(),
-                    transition_with_location_df["to_id"].to_numpy(),
+                    transition_df["from_id"].to_numpy(),
+                    transition_df["to_id"].to_numpy(),
                 ),
             )
-        )
+        ).toarray()
 
-        # 右確率行列にする
-        sparse_matrix = normalize(sparse_matrix, norm="l1", axis=1)
+        graph = Graph.Adjacency(matrix)
 
-        if cfg.exp.self_loop_prob is not None:
-            # セルフループを追加
-            sparse_matrix = (
-                sparse_matrix * (1 - cfg.exp.self_loop_prob)
-                + eye(sparse_matrix.shape[0]) * cfg.exp.self_loop_prob
-            )
-            # 一応 normalize (特に影響はないはずだがセルフループのみのやつもあるため)
-            sparse_matrix = normalize(sparse_matrix, norm="l1", axis=1)
+    """
+    PPR
+    """
+    with utils.trace("calc personalized pagerank"):
+        from_yad_no = []
+        to_yad_nos = []
+        scores = []
 
-        for _ in range(cfg.exp.transition_times - 1):
-            sparse_matrix *= sparse_matrix
-
-        # 各行から上位K件の要素のindexとvalueを取得する関数
-        def top_k_indices_per_row(matrix, K):
-            top_k_indices = np.argsort(-matrix, axis=1)[:, :K]
-            top_k_values = np.array(
-                [matrix[i, top_k_indices[i]] for i in range(matrix.shape[0])]
-            )
-            return top_k_indices, top_k_values
-
-        indices, values = top_k_indices_per_row(
-            sparse_matrix.toarray(), cfg.exp.num_candidate
-        )
-
-        # from_yad_no,
-
-        from_yad_no = [yid2yad_no[i] for i in range(len(indices))]
-        to_yad_nos = [[yid2yad_no[c] for c in cs] for cs in indices]
+        for yid in tqdm(range(graph.vcount())):
+            ppr = np.array(graph.personalized_pagerank(reset_vertices=yid))
+            top_k_indices = np.argsort(-ppr)[: cfg.exp.num_candidate]
+            top_k_values = ppr[top_k_indices]
+            from_yad_no.append(yid2yad_no[yid])
+            to_yad_nos.append([yid2yad_no[y] for y in top_k_indices])
+            scores.append(top_k_values)
+            if cfg.debug:
+                break
 
         yad2yad_df = pl.DataFrame(
             {
                 "from_yad_no": from_yad_no,  # unique_sids と同じ順番
                 "to_yad_nos": to_yad_nos,
-                "transition_prob": values,
+                "transition_prob": scores,
             }
         )
         yad2yad_df = (
             yad2yad_df.explode(["to_yad_nos", "transition_prob"])
-            .filter(pl.col("transition_prob") > 0)
             .rename({"to_yad_nos": "to_yad_no"})
+            .filter(
+                (pl.col("transition_prob") > 0)
+                & (pl.col("from_yad_no") != pl.col("to_yad_no"))
+            )
         )
 
         print(yad2yad_df.head())
         print(yad2yad_df.shape)
         yad2yad_df.write_parquet(output_path / "yad2yad_feature.parquet")
 
-    '''
     """
     候補の作成
     """
@@ -228,11 +146,14 @@ def my_app(cfg: DictConfig) -> None:
     with utils.timer("make candidates"):
 
         def make_candidates(log_df, session_df, transition_df):
+            # session_id ごとに最後の yad_no を取得する
             log_df = (
-                log_df.sort(by="session_id").with_columns(
-                    pl.col("yad_no").alias("from_yad_no")
-                )
+                log_df.group_by("session_id")
+                .agg(pl.all().sort_by("seq_no").last())
+                .sort(by="session_id")
+                .with_columns(pl.col("yad_no").alias("from_yad_no"))
             ).select(["session_id", "from_yad_no"])
+
             candidate_df = (
                 log_df.join(transition_df, on="from_yad_no")
                 .group_by(["session_id", "to_yad_no"])
@@ -302,7 +223,6 @@ def my_app(cfg: DictConfig) -> None:
             metrics["seq_len"] = i
             wandb.log(metrics)
             print(metrics)
-    '''
 
 
 if __name__ == "__main__":

@@ -57,7 +57,7 @@ def my_app(cfg: DictConfig) -> None:
         )
         # labelを付与
         label_seq_df = last_seq_df.join(train_label_df, on="session_id")
-        dfs = [train_log_df, label_seq_df]
+        dfs = []
         for i in range(cfg.exp.test_iter):
             dfs.append(test_log_df.with_columns(pl.col("session_id") + f"_{i}"))
         all_log_df = pl.concat(dfs).sort(["session_id", "seq_no"])

@@ -112,6 +112,13 @@ def concat_label_pred(cfg, first_df, transition_df, mode):
     return result
 
 
+def scale_pred(df):
+    scaler = MinMaxScaler()
+    scaled = scaler.fit_transform(df["pred"].to_numpy().reshape(-1, 1))
+    df = df.with_columns(pl.Series("pred", scaled.flatten()))
+    return df
+
+
 @hydra.main(version_base=None, config_path=".", config_name="config")
 def main(cfg: DictConfig) -> None:
     runtime_choices = HydraConfig.get().runtime.choices
@@ -133,13 +140,14 @@ def main(cfg: DictConfig) -> None:
     first_test_dfs = []
     for path, weight in cfg.exp.other_dirs.items():
         df = pl.read_parquet(Path(path) / "oof_pred.parquet")
-
+        df = scale_pred(df)
         df = df.with_columns(
             pl.col("pred") * weight,
             pl.col("session_count").cast(pl.Int32),
         )
         other_oof_dfs.append(df)
         df = pl.read_parquet(Path(path) / "test_pred.parquet")
+        df = scale_pred(df)
         df = df.with_columns(
             pl.col("pred") * weight,
             pl.col("session_count").cast(pl.Int32),
@@ -147,12 +155,14 @@ def main(cfg: DictConfig) -> None:
         other_test_dfs.append(df)
     for path, weight in cfg.exp.first_dirs.items():
         df = pl.read_parquet(Path(path) / "oof_pred.parquet")
+        df = scale_pred(df)
         df = df.with_columns(
             pl.col("pred") * weight,
             pl.col("session_count").cast(pl.Int32),
         )
         first_oof_dfs.append(df)
         df = pl.read_parquet(Path(path) / "test_pred.parquet")
+        df = scale_pred(df)
         df = df.with_columns(
             pl.col("pred") * weight,
             pl.col("session_count").cast(pl.Int32),

@@ -1,0 +1,9 @@
+num_candidate: 100
+k: [1, 5, 10, 50, 100]
+
+range_transitions: [-1,1]
+transition_times: 4
+self_loop_prob: 0.7
+location_prob: 0.0
+
+test_iter: 12

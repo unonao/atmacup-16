@@ -1,0 +1,14 @@
+
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+
+datasets_dir: /kaggle/working/output/datasets/030_train_test_feat/other
+only_first: False
+
+
+lgbm:
+  ndcg_eval_at: [10]
+  params:
+    learning_rate: 0.04
+    metric: [map]

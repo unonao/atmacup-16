@@ -13,11 +13,10 @@ import pandas as pd
 import polars as pl
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
-from sklearn.preprocessing import MinMaxScaler
 from tqdm.auto import tqdm
 
 import utils
-from utils.load import load_label_data, load_log_data, load_session_data
+from utils.load import load_label_data, load_log_data, load_session_data, load_yad_data
 from utils.logger import get_logger
 from utils.metrics import calculate_metrics
 
@@ -112,6 +111,30 @@ def concat_label_pred(cfg, first_df, transition_df, mode):
     return result
 
 
+def filter_unseen_yad(cfg, df):
+    # 出現回数をカウント
+    test_count_df = (
+        load_log_data(Path(cfg.dir.data_dir), "test")
+        .unique(["session_id", "yad_no"])["yad_no"]
+        .value_counts()
+    )
+    # 欠損値も考慮して全 yadの出現回数を作成
+    yad_df = load_yad_data(Path(cfg.dir.data_dir)).select(["yad_no"])
+    yad_counts_df = yad_df.join(test_count_df, on="yad_no", how="left").fill_null(0)
+
+    # 出現回数0回のyadリスト作成
+    filter_yad_list = yad_counts_df.filter(pl.col("counts") == 0)["yad_no"].to_list()
+
+    # 対象のyadのpredを -100する
+    df = df.with_columns(
+        pl.when(pl.col("candidates").is_in(filter_yad_list))
+        .then(pl.col("pred") - 100)
+        .otherwise(pl.col("pred"))
+        .alias("pred")
+    )
+    return df
+
+
 @hydra.main(version_base=None, config_path=".", config_name="config")
 def main(cfg: DictConfig) -> None:
     runtime_choices = HydraConfig.get().runtime.choices
@@ -133,7 +156,6 @@ def main(cfg: DictConfig) -> None:
     first_test_dfs = []
     for path, weight in cfg.exp.other_dirs.items():
         df = pl.read_parquet(Path(path) / "oof_pred.parquet")
-
         df = df.with_columns(
             pl.col("pred") * weight,
             pl.col("session_count").cast(pl.Int32),
@@ -191,6 +213,10 @@ def main(cfg: DictConfig) -> None:
             pl.col("session_count").max(),
         )
     )
+
+    # filter
+    other_oof_df = filter_unseen_yad(cfg, other_oof_df)
+    other_test_df = filter_unseen_yad(cfg, other_test_df)
 
     transition_df = pl.read_parquet(cfg.exp.transision_path).filter(
         pl.col("from_yad_no") != pl.col("to_yad_no")

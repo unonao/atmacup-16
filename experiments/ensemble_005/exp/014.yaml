@@ -1,0 +1,12 @@
+other_dirs:
+  output/exp/008_split/v030_other: 1.0
+
+
+first_dirs:
+  output/exp/008_split/v025_003_first: 0.1
+
+
+transision_path: output/cand_supervised/supervised-prob_matrix_test_weight/009/yad2yad_feature.parquet
+score_col: transition_prob
+
+# 0.4191073783149239

@@ -1,0 +1,8 @@
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+other_dirs:
+  output/exp/008_split/base: 0.9
+  output/exp/012_cat_boost/base: 0.1
+
+# 0.42201780555657276
