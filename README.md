@@ -30,8 +30,8 @@ python experiments/check/run.py exp=base
 
 
 ## 再現実行方法
-準備: input/atmaCup16_Dataset にデータを置く
-環境：GCE n2-standard-48 (48 vCPU, 24 core, 192 GB memory)
+- 準備: input/atmaCup16_Dataset にデータを置く
+- 環境：GCE n2-standard-48 (48 vCPU, 24 core, 192 GB memory)
 
 ```sh
 # 実行環境
