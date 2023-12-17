@@ -1,29 +1,4 @@
-# Kaggle テンプレート
-
-## 特徴
-- Docker によるポータブルでKaggleと同一の環境
-- Hydra による実験管理
-    - パスなど各スクリプトに共通する設定を yamls/config.yaml で管理
-    - 実験用スクリプトファイルの変更を major バージョンとしてフォルダごとに管理
-    - スクリプトごとの細かいパラメータ管理をminor バージョンとして同一フォルダ内に管理することでフォルダ移動の手間をなくす
-
-## Structure
-```text
-.
-├── .jupyter-settings: jupyter-lab の設定ファイル。compose.yamlでJUPYTERLAB_SETTINGS_DIRを指定している
-├── Dockerfile
-├── Dockerfile.cpu
-├── LICENSE
-├── README.md
-├── compose.cpu.yaml
-├── compose.yaml
-├── exp
-├── input
-├── notebook
-├── output
-├── utils
-└── yamls
-```
+# atmaCup16 1st place solution
 
 ## Docker による環境構築
 
@@ -32,12 +7,12 @@ docker compose build
 docker compose -f compose.cpu.yaml build
 
 # bash に入る場合
-docker compose run --rm kaggle bash 
-docker compose -f compose.cpu.yaml run --rm kaggle-cpu bash
+docker compose run --rm kaggle bash  # GPU
+docker compose -f compose.cpu.yaml run --rm kaggle-cpu bash # CPU
 
 # jupyter lab を起動する場合
-docker compose up 
-docker compose -f compose.cpu.yaml up 
+docker compose up  # GPU
+docker compose -f compose.cpu.yaml up  # CPU
 ```
 
 ## スクリプトの実行方法
@@ -54,27 +29,51 @@ python experiments/check/run.py exp=base
     - `{major_exp_name}` と `{minor_exp_name}` の組み合わせで実験が再現できるようにする
 
 
-### 候補生成
-```sh
- python cand_unsupervised/ranking/run.py
- python cand_unsupervised/ranking_location/run.py exp=sml_cd
- python cand_unsupervised/ranking_location/run.py exp=lrg_cd
- python cand_unsupervised/ranking_location/run.py exp=ken_cd
- python cand_unsupervised/ranking_location/run.py exp=wid_cd
- python cand_unsupervised/transition_prob/run.py
+## 再現実行方法
+準備: input/atmaCup16_Dataset にデータを置く
+環境：GCE n2-standard-48 (48 vCPU, 24 core, 192 GB memory)
 
- python cand_unsupervised/ranking_location_all/run.py exp=sml_cd
-```
-
-### 学習データ生成
 ```sh
+# 実行環境
+docker compose -f compose.cpu.yaml run --rm kaggle-cpu bash
+
+# 候補・特徴量作成
+python cand_unsupervised transition_prob_fix/run.py exp=base
+python cand_unsupervised/transition_prob_all_fix/run.py exp=base
+python cand_unsupervised/ranking_location/run.py exp=sml_cd
+python cand_unsupervised/ranking_location/run.py exp=lrg_cd
+python cand_unsupervised/ranking_location_all/run.py exp=sml_cd
+
+python cand_unsupervised/split_transition_prob_fix/run.py exp=base
+python cand_unsupervised/split_transition_prob_all_fix/run.py exp=base
+python cand_unsupervised/split_transition_prob_bidirect_all_fix/run.py exp=base'
+python cand_unsupervised/split_feat_transition_prob_location/run.py exp=base'
+
+python cand_unsupervised/split_ranking/run.py exp=base
+python cand_unsupervised/split_ranking_location/run.py exp=ken_cd
+python cand_unsupervised/split_ranking_location/run.py exp=lrg_cd
+python cand_unsupervised/split_ranking_location/run.py exp=sml_cd
+python cand_unsupervised/split_ranking_location/run.py exp=wid_cd
+
+# fold 作成
 python generate_datasets/make_cv/run.py 
-python generate_datasets/002_add_features/run.py 
-```
 
-### 学習&推論
-```sh
-python experiments/005_one_epoch/run.py exp=001 exp.one_epoch=True
-python experiments/005_one_epoch/run.py exp=v2_004
-python experiments/005_one_epoch/run.py exp=v2_005
+# 学習用データ生成
+python generate_datasets/030_train_test_feat/run.py exp=base
+python generate_datasets/030_train_test_feat/run.py exp=other
+python generate_datasets/030_train_test_feat/run.py exp=first
+
+# 学習：長さ1
+python experiments/008_split/run.py exp=v030_first
+
+# 学習：長さ1以外
+python experiments/008_split/run.py exp=v030_other
+python experiments/008_split/run.py exp=v030_other001
+python experiments/012_cat_boost/run.py exp=v030_other_001
+
+# 遷移行列の計算
+python cand_supervised/prob_matrix_test_weight/run.py exp=021
+
+# それぞれの予測値を結合してsubmissionファイルを作る
+python experiments/ensemble_007/run.py exp=032
 ```
