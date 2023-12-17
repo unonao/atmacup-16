@@ -1,0 +1,38 @@
+fold_path: '/kaggle/working/output/datasets/make_cv/base/train_fold.parquet'
+
+limit_seq:  # null: all, 1: 1以下, 2: 2以下, ...
+
+candidate_info_list:
+  - name: 'ranking_location/sml_cd' 
+    max_num_candidates: 5
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/sml_cd'
+  - name: 'ranking_location/lrg_cd' 
+    max_num_candidates: 5
+    dir: '/kaggle/working/output/cand_unsupervised/ranking_location/lrg_cd'
+  - name: 'ranking_location_all/sml_cd' 
+    max_num_candidates: 25
+    dir: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/two002'
+
+
+#avg_candidates: 28.318883400647042, recall_rate: 0.8069089498368537
+#session_count: 1, len: 5216339
+#session_count: 1, avg_candidates: 28.137718058537324
+#session_count: 1, recall_rate: 0.6996375130808151
+#session_count: 2, len: 2374705
+#session_count: 2, avg_candidates: 28.682436920995737
+#session_count: 2, recall_rate: 0.9992753010520213
+
+transition_prob_path: '/kaggle/working/output/cand_unsupervised/transition_prob_fix/base/yad2yad_feature.parquet'
+transition_prob_all_path: '/kaggle/working/output/cand_unsupervised/transition_prob_all_fix/base/yad2yad_feature.parquet'
+transition_prob_bidirect_all_path: '/kaggle/working/output/cand_unsupervised/transition_prob_bidirect_all_fix/base/yad2yad_feature.parquet'
+
+prob_matrix_path: '/kaggle/working/output/cand_unsupervised/prob_matrix_filter/two002/yad2yad_feature.parquet'
+
+feat_transition_prob_location_dir: '/kaggle/working/output/cand_unsupervised/feat_transition_prob_location/base'
+
+yad_feature_paths:
+  - output/cand_unsupervised/ranking/base/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/ken_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/lrg_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/sml_cd/yad_feature.parquet
+  - output/cand_unsupervised/ranking_location/wid_cd/yad_feature.parquet

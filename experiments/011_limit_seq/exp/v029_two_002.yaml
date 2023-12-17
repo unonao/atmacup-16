@@ -1,0 +1,7 @@
+
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+
+datasets_dir: /kaggle/working/output/datasets/029_limit_seq_sum/two_002
+limit_seq: 2

@@ -1,0 +1,25 @@
+
+defaults:
+  - base@_here_ # ベースの設定ファイルを指定する
+
+
+datasets_dir: /kaggle/working/output/datasets/029_limit_seq_sum/three_001
+limit_seq: 3
+
+lgbm:
+  cat_cols: []
+  unuse_cols: 
+    - yad_no
+    - session_id
+    - original
+    - label
+    - fold
+    - candidates
+    - yad_type
+    - wid_cd
+    - ken_cd
+    - lrg_cd
+    - sml_cd
+  ndcg_eval_at: [10]
+  params:
+    metric: [map]

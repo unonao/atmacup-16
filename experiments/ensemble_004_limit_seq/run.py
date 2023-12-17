@@ -23,14 +23,22 @@ from utils.metrics import calculate_metrics
 logger = None
 
 
-def make_eval_df(cfg, other_oof_df: pl.DataFrame, first_oof_df: pl.DataFrame):
-    other_oof_df = other_oof_df.filter(pl.col("session_count") != 1).drop(
+def make_eval_df(
+    cfg,
+    other_oof_df: pl.DataFrame,
+    first_oof_df: pl.DataFrame,
+    second_oof_df: pl.DataFrame,
+):
+    other_oof_df = other_oof_df.filter(pl.col("session_count") > 2).drop(
         "session_count"
     )
     first_oof_df = first_oof_df.filter(pl.col("session_count") == 1).drop(
         "session_count"
     )
-    pred_df = pl.concat([other_oof_df, first_oof_df]).sort(
+    second_oof_df = second_oof_df.filter(pl.col("session_count") == 2).drop(
+        "session_count"
+    )
+    pred_df = pl.concat([other_oof_df, first_oof_df, second_oof_df]).sort(
         by=["session_id", "pred"], descending=True
     )
     pred_candidates_df = pred_df.group_by("session_id").agg(pl.col("candidates"))
@@ -41,14 +49,22 @@ def make_eval_df(cfg, other_oof_df: pl.DataFrame, first_oof_df: pl.DataFrame):
     return candidaates_df
 
 
-def make_submission(cfg, other_test_df: pl.DataFrame, first_test_df: pl.DataFrame):
-    other_test_df = other_test_df.filter(pl.col("session_count") != 1).drop(
+def make_submission(
+    cfg,
+    other_test_df: pl.DataFrame,
+    first_test_df: pl.DataFrame,
+    second_test_df: pl.DataFrame,
+):
+    other_test_df = other_test_df.filter(pl.col("session_count") > 2).drop(
         "session_count"
     )
     first_test_df = first_test_df.filter(pl.col("session_count") == 1).drop(
         "session_count"
     )
-    pred_df = pl.concat([other_test_df, first_test_df]).sort(
+    second_test_df = second_test_df.filter(pl.col("session_count") == 2).drop(
+        "session_count"
+    )
+    pred_df = pl.concat([other_test_df, first_test_df, second_test_df]).sort(
         by=["session_id", "pred"], descending=True
     )
     session_df = load_session_data(Path(cfg.dir.data_dir), "test")
@@ -126,16 +142,18 @@ def main(cfg: DictConfig) -> None:
     logger.info(f"ouput_path: {output_path}")
     logger.info(OmegaConf.to_yaml(cfg))
 
-    other_oof_df = pl.read_parquet(Path(cfg.exp.other_dirs[0]) / "oof_pred.parquet")
-    other_test_df = pl.read_parquet(Path(cfg.exp.other_dirs[0]) / "test_pred.parquet")
-    first_oof_df = pl.read_parquet(Path(cfg.exp.first_dirs[0]) / "oof_pred.parquet")
-    first_test_df = pl.read_parquet(Path(cfg.exp.first_dirs[0]) / "test_pred.parquet")
+    other_oof_df = pl.read_parquet(Path(cfg.exp.other_dir) / "oof_pred.parquet")
+    other_test_df = pl.read_parquet(Path(cfg.exp.other_dir) / "test_pred.parquet")
+    first_oof_df = pl.read_parquet(Path(cfg.exp.first_dir) / "oof_pred.parquet")
+    first_test_df = pl.read_parquet(Path(cfg.exp.first_dir) / "test_pred.parquet")
+    second_oof_df = pl.read_parquet(Path(cfg.exp.second_dir) / "oof_pred.parquet")
+    second_test_df = pl.read_parquet(Path(cfg.exp.second_dir) / "test_pred.parquet")
     transition_df = pl.read_parquet(cfg.exp.transision_path).filter(
         pl.col("from_yad_no") != pl.col("to_yad_no")
     )
 
     with utils.trace("eval"):
-        oof_candidate_df = make_eval_df(cfg, other_oof_df, first_oof_df)
+        oof_candidate_df = make_eval_df(cfg, other_oof_df, first_oof_df, second_oof_df)
         logger.info(oof_candidate_df.head())
         metrics = calculate_metrics(
             oof_candidate_df, candidates_col="candidates", label_col="yad_no", k=[10]
@@ -162,7 +180,9 @@ def main(cfg: DictConfig) -> None:
                 logger.info(metrics)
 
     with utils.trace("submission"):
-        test_submission_df = make_submission(cfg, other_test_df, first_test_df)
+        test_submission_df = make_submission(
+            cfg, other_test_df, first_test_df, second_test_df
+        )
         logger.info(test_submission_df.head())
         test_submission_df.write_csv(output_path / "submission.csv")
 
@@ -171,6 +191,7 @@ def main(cfg: DictConfig) -> None:
             cfg,
             other_oof_df,
             concat_label_pred(cfg, first_oof_df, transition_df, "train"),
+            second_oof_df,
         )
         logger.info(oof_candidate_df.head())
         metrics = calculate_metrics(
@@ -201,6 +222,7 @@ def main(cfg: DictConfig) -> None:
             cfg,
             other_test_df,
             concat_label_pred(cfg, first_test_df, transition_df, "test"),
+            second_test_df,
         )
         logger.info(test_submission_df.head())
         test_submission_df.write_csv(output_path / "submission_pp.csv")
