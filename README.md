@@ -46,8 +46,8 @@ python cand_unsupervised/ranking_location_all/run.py exp=sml_cd
 
 python cand_unsupervised/split_transition_prob_fix/run.py exp=base
 python cand_unsupervised/split_transition_prob_all_fix/run.py exp=base
-python cand_unsupervised/split_transition_prob_bidirect_all_fix/run.py exp=base'
-python cand_unsupervised/split_feat_transition_prob_location/run.py exp=base'
+python cand_unsupervised/split_transition_prob_bidirect_all_fix/run.py exp=base
+python cand_unsupervised/split_feat_transition_prob_location/run.py exp=base
 
 python cand_unsupervised/split_ranking/run.py exp=base
 python cand_unsupervised/split_ranking_location/run.py exp=ken_cd
