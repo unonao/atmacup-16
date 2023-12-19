@@ -38,7 +38,7 @@ python experiments/check/run.py exp=base
 docker compose -f compose.cpu.yaml run --rm kaggle-cpu bash
 
 # 候補・特徴量作成
-python cand_unsupervised transition_prob_fix/run.py exp=base
+python cand_unsupervised/transition_prob_fix/run.py exp=base
 python cand_unsupervised/transition_prob_all_fix/run.py exp=base
 python cand_unsupervised/ranking_location/run.py exp=sml_cd
 python cand_unsupervised/ranking_location/run.py exp=lrg_cd
@@ -54,6 +54,8 @@ python cand_unsupervised/split_ranking_location/run.py exp=ken_cd
 python cand_unsupervised/split_ranking_location/run.py exp=lrg_cd
 python cand_unsupervised/split_ranking_location/run.py exp=sml_cd
 python cand_unsupervised/split_ranking_location/run.py exp=wid_cd
+
+python cand_unsupervised/cand_unsupervised/prob_matrix_filter exp=two002
 
 # fold 作成
 python generate_datasets/make_cv/run.py 
