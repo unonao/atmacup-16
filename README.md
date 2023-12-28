@@ -55,7 +55,7 @@ python cand_unsupervised/split_ranking_location/run.py exp=lrg_cd
 python cand_unsupervised/split_ranking_location/run.py exp=sml_cd
 python cand_unsupervised/split_ranking_location/run.py exp=wid_cd
 
-python cand_unsupervised/cand_unsupervised/prob_matrix_filter exp=two002
+python cand_unsupervised/prob_matrix_filter/run.py exp=two002
 
 # fold 作成
 python generate_datasets/make_cv/run.py 
